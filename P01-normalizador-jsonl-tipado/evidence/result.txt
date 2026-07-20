@@ -1,0 +1,27 @@
+Medido em: 2026-07-20
+Plataforma: WSL2 x86_64
+Python: 3.14.6
+uv: 0.11.29
+
+Comando:
+  make clean && make setup && make check && make demo
+
+Resultado dos gates:
+  Ruff: todos os checks passaram
+  Pyright estrito: 0 erros, 0 avisos
+  pytest: 8 testes passaram
+
+Cenário misto:
+  entrada: 6 linhas
+  válidos: 2 linhas
+  rejeitados: 4 linhas
+  invariante: 6 = 2 + 4
+
+Falhas classificadas:
+  unknown_currency
+  invalid_date
+  missing_field
+  invalid_json
+
+Falha de saída:
+  OutputWriteError preservou OSError em __cause__
