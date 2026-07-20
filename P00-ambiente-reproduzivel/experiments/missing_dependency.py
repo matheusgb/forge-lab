@@ -1,0 +1,3 @@
+import pacote_que_nao_foi_instalado
+
+pacote_que_nao_foi_instalado.run()

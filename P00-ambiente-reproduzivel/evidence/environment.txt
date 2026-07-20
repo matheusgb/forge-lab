@@ -1,0 +1,21 @@
+Medido em: 2026-07-20
+Plataforma: WSL2 x86_64
+Python: 3.14.6
+pyenv: 2.8.1
+uv: 0.11.29
+
+Comando:
+  make clean && make setup && make check
+
+Resultado:
+  ambiente recriado a partir do uv.lock
+  Ruff: todos os checks passaram
+  Pyright: 0 erros, 0 avisos
+  pytest: 2 testes passaram
+
+Experimento:
+  make experiment
+
+Resultado:
+  dependência ausente detectada por reportMissingImports
+  tipo incompatível detectado por reportAssignmentType

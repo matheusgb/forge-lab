@@ -1,0 +1,10 @@
+name: recriar-ambiente-e-verificar-gates
+seed: null
+concurrency: 1
+repetitions: 1
+duration_seconds: null
+volume: 1
+timeout_seconds: 120
+failure:
+  missing_dependency: experiments/missing_dependency.py
+  incompatible_type: experiments/type_error.py
