@@ -1,0 +1,32 @@
+Medido em: 2026-07-20
+Python: 3.14.6
+FastAPI: 0.139.2
+Pydantic: 2.13.4
+Starlette: 1.3.1
+httpx2: 2.7.0
+Armazenamento: repositório em memória
+
+Comandos:
+  make check
+  make demo
+  make openapi
+  make experiment
+
+Resultado:
+  Ruff: passou
+  Pyright estrito: 0 erros
+  pytest: 8 testes passaram
+  POST /tasks: 201 Created
+  GET /tasks/{id}: 200 OK
+  PATCH /tasks/{id}/complete: 200 OK
+  PATCH repetido: 409 Conflict
+
+Falhas controladas:
+  payload inválido: 422
+  tarefa ausente: 404
+  conclusão repetida: 409
+  repositório indisponível: 503
+  identidade ausente: 401
+
+Contrato:
+  evidence/openapi.json

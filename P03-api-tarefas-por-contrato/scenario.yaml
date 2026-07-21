@@ -1,0 +1,15 @@
+{
+  "name": "contrato-de-tarefas",
+  "repetitions": 1,
+  "timeout_seconds": 30,
+  "repository": "in_memory",
+  "identity_header": "X-User-ID",
+  "request_header": "X-Request-ID",
+  "cases": [
+    "create_and_complete",
+    "invalid_payload",
+    "missing_task",
+    "repeated_transition",
+    "repository_failure"
+  ]
+}
