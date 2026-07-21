@@ -1,0 +1,10 @@
+Cenário: lifecycle-bloqueio-e-crash-local
+Requisições concorrentes: 4
+Espera bloqueante por requisição: 0.15 s
+Rota def em thread pool: 0.161 s
+Rota async def bloqueante: 0.620 s
+Razão async bloqueante/def: 3.85x
+Fechamento gracioso: client=1, resource=1
+Crash durante job fcd0e51b-a21f-4995-8534-1d12b997cab6: started=1, completed=0
+Falha no startup: resource falhou e client adquirido foi fechado
+Falha no shutdown: resource falhou e client ainda foi fechado

@@ -1,0 +1,6 @@
+{"event": "client_started", "pid": 168380, "timestamp": "2026-07-21T19:37:34.643138+00:00"}
+{"event": "resource_started", "pid": 168380, "timestamp": "2026-07-21T19:37:34.648842+00:00"}
+{"event": "application_started", "pid": 168380, "timestamp": "2026-07-21T19:37:34.650496+00:00"}
+{"event": "application_stopping", "pid": 168380, "timestamp": "2026-07-21T19:37:34.855955+00:00"}
+{"close_calls": 1, "event": "resource_close_failed", "pid": 168380, "timestamp": "2026-07-21T19:37:34.862531+00:00"}
+{"close_calls": 1, "event": "client_closed", "pid": 168380, "timestamp": "2026-07-21T19:37:34.865205+00:00"}

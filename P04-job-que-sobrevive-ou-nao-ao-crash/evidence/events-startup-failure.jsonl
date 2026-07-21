@@ -1,0 +1,3 @@
+{"event": "client_started", "pid": 168373, "timestamp": "2026-07-21T19:37:34.377808+00:00"}
+{"event": "resource_start_failed", "pid": 168373, "timestamp": "2026-07-21T19:37:34.381851+00:00"}
+{"close_calls": 1, "event": "client_closed", "pid": 168373, "timestamp": "2026-07-21T19:37:34.383396+00:00"}

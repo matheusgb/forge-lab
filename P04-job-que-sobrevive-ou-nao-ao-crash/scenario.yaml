@@ -1,0 +1,8 @@
+{
+  "name": "lifecycle-bloqueio-e-crash-local",
+  "concurrent_requests": 4,
+  "blocking_delay_seconds": 0.15,
+  "background_duration_seconds": 1.0,
+  "startup_timeout_seconds": 10.0,
+  "request_timeout_seconds": 5.0
+}

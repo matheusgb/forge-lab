@@ -1,0 +1,4 @@
+{"event": "client_started", "pid": 168371, "timestamp": "2026-07-21T19:37:34.100972+00:00"}
+{"event": "resource_started", "pid": 168371, "timestamp": "2026-07-21T19:37:34.107158+00:00"}
+{"event": "application_started", "pid": 168371, "timestamp": "2026-07-21T19:37:34.108989+00:00"}
+{"event": "job_started", "job_id": "fcd0e51b-a21f-4995-8534-1d12b997cab6", "pid": 168371, "timestamp": "2026-07-21T19:37:34.159734+00:00"}
