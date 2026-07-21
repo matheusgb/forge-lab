@@ -1,0 +1,6 @@
+Cenário: retry-seletivo-local
+dois-500-depois-200: operação=safe_read; tentativas=[http_500, http_500, http_200]; esperas=[0.55s, 1.10s]; decisão=success
+429-com-retry-after: operação=safe_read; tentativas=[http_429, http_200]; esperas=[2.00s]; decisão=success
+timeout-depois-200: operação=safe_read; tentativas=[timeout, http_200]; esperas=[0.55s]; decisão=success
+400-definitivo: operação=safe_read; tentativas=[http_400]; esperas=[nenhuma]; decisão=stop_permanent
+500-em-operacao-insegura: operação=unsafe_create; tentativas=[http_500]; esperas=[nenhuma]; decisão=stop_unsafe

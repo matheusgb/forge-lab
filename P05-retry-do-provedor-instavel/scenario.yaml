@@ -1,0 +1,37 @@
+{
+  "name": "retry-seletivo-local",
+  "random_value": 0.5,
+  "policy": {
+    "max_attempts": 3,
+    "base_delay_seconds": 0.5,
+    "max_delay_seconds": 5.0,
+    "jitter_ratio": 0.2
+  },
+  "cases": [
+    {
+      "name": "dois-500-depois-200",
+      "operation": "safe_read",
+      "outcomes": [{"status": 500}, {"status": 500}, {"status": 200}]
+    },
+    {
+      "name": "429-com-retry-after",
+      "operation": "safe_read",
+      "outcomes": [{"status": 429, "retry_after": "2"}, {"status": 200}]
+    },
+    {
+      "name": "timeout-depois-200",
+      "operation": "safe_read",
+      "outcomes": [{"timeout": true}, {"status": 200}]
+    },
+    {
+      "name": "400-definitivo",
+      "operation": "safe_read",
+      "outcomes": [{"status": 400}]
+    },
+    {
+      "name": "500-em-operacao-insegura",
+      "operation": "unsafe_create",
+      "outcomes": [{"status": 500}, {"status": 200}]
+    }
+  ]
+}
