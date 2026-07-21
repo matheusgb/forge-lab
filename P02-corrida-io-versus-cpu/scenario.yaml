@@ -1,0 +1,14 @@
+{
+  "name": "io-versus-cpu-local",
+  "repetitions": 5,
+  "heartbeat_interval_seconds": 0.01,
+  "io": {
+    "operations": 10,
+    "delay_seconds": 0.03
+  },
+  "cpu": {
+    "inputs": [500000, 500013, 500029, 500041],
+    "process_workers": 4
+  },
+  "timeout_seconds": 120
+}
