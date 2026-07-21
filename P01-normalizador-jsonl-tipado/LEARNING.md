@@ -1,4 +1,4 @@
-# Learning log
+# Registro de aprendizado
 
 ## Premissa
 
@@ -14,18 +14,19 @@ erros conhecidos e interromper quando a própria escrita deixa de ser confiável
 
 - Python: 3.14.6; uv: 0.11.29.
 - `make check`: Ruff passou, Pyright retornou 0 erros e os 8 testes passaram.
-- cenário misto: 6 entradas produziram 2 válidas e 4 rejeitadas; a invariante
-  `total == valid + rejected` foi verdadeira.
-- escrita quebrada: `OutputWriteError` foi emitido na linha esperada e preservou
+- cenário misto: 6 entradas produziram 2 válidas e 4 rejeitadas. A regra
+  `total == valid + rejected` foi respeitada.
+- falha de escrita: `OutputWriteError` foi emitido na linha esperada e preservou
   um `OSError` em `__cause__`.
 
-## Trade-off
+## Escolha e consequência
 
-O `Result[T]` deixa falhas esperadas explícitas sem usar exceções como fluxo no
-processador. Dentro dos parsers, exceções de domínio ainda são úteis para adicionar
-contexto e manter a causa da biblioteca padrão com `raise ... from error`.
+O `Result[T]` mostra de forma explícita se uma linha produziu um pedido ou um erro.
+As funções que interpretam cada campo usam exceções de domínio para acrescentar o
+número da linha e preservar o erro original com `raise ... from error`.
 
 ## Próximo limite
 
-As duas saídas não são uma transação atômica. Resolver queda entre duas escritas
-exigiria outro desenho, como staging seguido de rename ou armazenamento transacional.
+As duas saídas não são gravadas como uma única operação indivisível. Se o programa
+parar entre uma gravação e outra, os arquivos podem ficar incompletos. Evitar isso
+exigiria arquivos temporários seguidos de renomeação ou um armazenamento transacional.

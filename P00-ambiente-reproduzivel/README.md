@@ -1,30 +1,16 @@
-# P00 — Ambiente reproduzível
+# P00: Ambiente reproduzível
 
-Um microprojeto para observar como versão do Python, ambiente virtual, dependências,
-lockfile e ferramentas de qualidade se encaixam.
+Um projeto Python pode funcionar na sua máquina e falhar em outra porque a versão do
+Python ou das dependências é diferente. Este laboratório mostra como registrar essas
+versões e recriar o mesmo ambiente quando necessário.
 
-## Hipótese
+## O que este projeto comprova
 
-Com a versão do Python fixada e `uv.lock` versionado, uma máquina limpa consegue
-recriar o mesmo ambiente com um comando e executar os mesmos gates.
+O ambiente virtual `.venv` pode ser apagado sem medo. A versão do Python e as
+dependências necessárias estão descritas em arquivos que permanecem no projeto.
+Com esses arquivos, o `uv` consegue criar uma `.venv` nova e repetir as verificações.
 
-## Pré-requisitos
-
-- `pyenv` para instalar e selecionar o Python indicado em `.python-version`;
-- `uv` para criar `.venv`, resolver dependências e executar comandos.
-
-Na raiz deste projeto, confira:
-
-```bash
-python --version
-uv --version
-pyenv version
-```
-
-O resultado esperado é Python 3.14.6 selecionado por esta pasta. O Python global
-não precisa ser alterado.
-
-## Execução
+## Preparação e execução
 
 ```bash
 make setup
@@ -32,37 +18,36 @@ make check
 make demo
 ```
 
-`make setup` cria `.venv` e instala exatamente o grafo registrado em `uv.lock`.
-Não é necessário ativar o ambiente: `uv run` escolhe a `.venv` do projeto. Se
-quiser ativá-lo manualmente, use `source .venv/bin/activate`.
+`make setup` cria a `.venv` e instala as dependências. Não é necessário ativar o
+ambiente manualmente porque os comandos usam `uv run`.
+
+Para conferir as ferramentas usadas:
+
+```bash
+python --version
+pyenv version
+uv --version
+```
+
+Dentro desta pasta, o resultado esperado é Python 3.14.6. Essa escolha vale apenas
+para o projeto e não altera a versão global do Python.
 
 ## O papel de cada arquivo
 
-- `.python-version`: é parecido com `.nvmrc`; seleciona o interpretador local.
-- `pyproject.toml`: declara o projeto, a faixa de Python, dependências diretas e
-  configuração das ferramentas. É o arquivo de intenção, parecido com
-  `package.json`.
-- `uv.lock`: registra as versões exatas e hashes de todo o grafo resolvido. É o
-  retrato reproduzível, parecido com `package-lock.json` ou `pnpm-lock.yaml`.
-- `.venv`: contém o interpretador e os pacotes instalados localmente; não entra no
-  Git porque é reconstruído pelos dois arquivos anteriores.
+| Arquivo | Para que serve |
+| --- | --- |
+| `.python-version` | escolhe a versão do Python nesta pasta |
+| `pyproject.toml` | descreve o projeto, as dependências diretas e as ferramentas |
+| `uv.lock` | registra as versões exatas de todos os pacotes instalados |
+| `.venv` | guarda o Python e os pacotes usados durante a execução |
 
-`pytest`, `ruff` e `pyright` são dependências de desenvolvimento: ajudam a testar,
-formatar/lintar e verificar tipos, mas não fazem parte da execução do programa.
-O projeto não possui dependência de runtime além da biblioteca padrão.
+Se você conhece JavaScript, `pyproject.toml` se parece com `package.json` e
+`uv.lock` cumpre um papel parecido com `package-lock.json`. A `.venv` não entra no
+Git porque pode ser reconstruída.
 
-## Experimento controlado
+## Experimento
 
-```bash
-make experiment
-```
-
-O script executa o `pyright` contra duas fixtures deliberadamente inválidas: uma
-tem uma dependência ausente e outra atribui `str` onde `int` é esperado. O
-experimento só passa quando ambos os verificadores falham pelo motivo esperado.
-Essas fixtures ficam fora do gate normal para o projeto permanecer saudável.
-
-Para provar a recriação completa:
+Primeiro, apague o ambiente e recrie tudo:
 
 ```bash
 make clean
@@ -70,9 +55,23 @@ make setup
 make check
 ```
 
-## Demo de três minutos
+Depois, confirme que as ferramentas também detectam código inválido:
 
-1. Mostre as três versões do ambiente.
-2. Rode `make clean && make setup && make check`.
-3. Rode `make experiment` e aponte os dois erros detectados.
-4. Compare `pyproject.toml`, `uv.lock` e `.venv` usando a seção acima.
+```bash
+make experiment
+```
+
+O experimento apresenta dois erros intencionais. Um arquivo importa uma dependência
+que não existe. O outro coloca um texto onde o código espera um número inteiro. O
+experimento só passa se o Pyright identificar os dois problemas.
+
+## Limite do laboratório
+
+Este projeto comprova a recriação do ambiente local. Ele não testa vários sistemas
+operacionais, várias versões do Python nem a publicação de um pacote.
+
+## Resumo da ópera
+
+`.python-version` escolhe o Python. `pyproject.toml` declara o que o projeto precisa.
+`uv.lock` registra as versões exatas. A `.venv` é apenas o ambiente criado a partir
+desses arquivos. Se ela desaparecer, `uv sync --locked` consegue recriá-la.

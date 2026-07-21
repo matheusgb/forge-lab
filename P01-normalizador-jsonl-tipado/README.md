@@ -1,23 +1,51 @@
-# P01 — Normalizador JSONL tipado
+# P01: Normalizador JSONL tipado
 
-Uma CLI pequena que lê um pedido por linha, normaliza os válidos e explica por que
-cada linha inválida foi rejeitada. Uma entrada ruim não interrompe as próximas
-quando continuar é seguro.
+Arquivos recebidos de outros sistemas nem sempre chegam perfeitos. Um pedido pode
+ter uma moeda desconhecida, uma data inválida ou até um JSON incompleto. O programa
+não deve esconder essas linhas nem descartar todo o arquivo por causa de um erro.
 
-## Pergunta
+Este laboratório cria um programa de linha de comando que classifica cada pedido
+como válido ou rejeitado e registra o motivo da decisão.
 
-Como modelar dados e erros em Python de modo que nenhuma linha desapareça e a
-causa original continue disponível para diagnóstico?
+## Como o programa funciona
 
-## Setup e execução
+O arquivo de entrada usa JSONL, um formato no qual cada linha contém um JSON
+independente. Isso permite continuar depois de uma linha inválida.
+
+```text
+linha do arquivo
+      |
+      v
+validar e normalizar
+      |
+      +--> pedido válido  --> valid.jsonl
+      |
+      +--> pedido inválido --> rejected.jsonl
+```
+
+No final, esta regra precisa ser verdadeira:
+
+```text
+total de linhas = válidas + rejeitadas
+```
+
+## Preparação e execução
 
 ```bash
 make setup
 make check
-make demo
+make experiment
 ```
 
-O comando equivalente à demo é:
+O experimento processa seis pedidos:
+
+```text
+6 linhas recebidas
+2 pedidos válidos
+4 pedidos rejeitados
+```
+
+A CLI também pode ser executada diretamente:
 
 ```bash
 uv run normalize-orders \
@@ -26,50 +54,49 @@ uv run normalize-orders \
   output/rejected.jsonl
 ```
 
-A saída-resumo esperada é:
+O resumo confirma que nenhuma linha desapareceu:
 
 ```json
 {"total":6,"valid":2,"rejected":4,"invariant":true}
 ```
 
-Veja os dois arquivos com `make experiment`. O cenário fixo contém moeda
-desconhecida, data impossível, campo ausente e JSON quebrado; o mesmo comando roda
-o teste que simula falha durante a escrita.
+`invariant: true` significa que `6 = 2 + 4`.
 
-## Checkpoints
+## O que é normalizado
 
-- **C0 — starter:** `make setup && make check` prepara o projeto.
-- **C1 — caminho feliz:** uma linha válida vira um `Order` normalizado.
-- **C2 — quebra:** quatro linhas ruins são classificadas sem esconder as seguintes.
-- **C3 — prova:** testes cobrem as classes de erro, escrita quebrada e a invariante.
+- A moeda passa para letras maiúsculas, como `brl` para `BRL`.
+- A data passa para UTC, um fuso horário comum entre sistemas.
+- O valor monetário passa a ter duas casas decimais.
+- Tags repetidas são removidas.
+- Espaços desnecessários são removidos dos textos.
 
-## Onde estão os conceitos
+Se uma linha tiver moeda desconhecida, data impossível, campo obrigatório ausente
+ou JSON inválido, ela será gravada em `rejected.jsonl` com o número da linha e o
+motivo da rejeição.
 
-- `dataclass`: `Order`, `Money`, `Result` e `Summary`.
-- `Enum`: moedas aceitas e códigos de erro.
-- composição: `Order` contém `Money`.
-- `Optional`: `note` é representado por `str | None`.
-- genérico: `Result[T]` carrega um valor tipado ou erro.
-- `list` e `tuple`: tags são montadas numa lista e congeladas numa tupla.
-- `set`: remove tags repetidas e detecta IDs duplicados.
-- `dict`: representa JSON e contabiliza erros por código.
-- context manager: abre e sempre fecha as duas saídas.
-- exceção encadeada: `raise ... from error` mantém `__cause__`.
+## Conceitos de Python usados
 
-## Regra de continuação
+- `dataclass` representa pedidos, valores monetários e resumos.
+- `Enum` limita as moedas e os códigos de erro aceitos.
+- `Result[T]` representa um pedido válido ou um erro conhecido.
+- `list`, `tuple`, `set` e `dict` organizam tags, IDs e contagens.
+- O gerenciador de contexto garante que os arquivos sejam fechados.
+- `raise ... from error` preserva o erro original para diagnóstico.
 
-Erros pertencentes a uma linha são escritos em `rejected.jsonl`, e o processamento
-continua. Falha na própria saída é diferente: continuar perderia registros, então a
-CLI interrompe com `OutputWriteError` e mantém o `OSError` original como causa.
+## Quando o programa deve parar
 
-## Demo de três minutos
+Um erro nos dados afeta apenas a linha atual. O programa registra a rejeição e segue
+para a próxima linha. Uma falha ao gravar os arquivos é diferente. Nesse caso, o
+programa para porque continuar poderia fazer pedidos desaparecerem sem registro.
 
-1. Rode `make demo` e confira que `6 = 2 + 4`.
-2. Mostre uma linha normalizada e uma rejeitada.
-3. Aponte `Result[T]`, `Order` composto com `Money` e uma exceção com `from`.
-4. Rode o teste `test_output_error_preserves_os_error_as_cause`.
+## Limite do laboratório
 
-## Não foi provado
+Os dois arquivos de saída não são gravados como uma única operação indivisível. O
+projeto também não possui API, banco de dados ou processamento paralelo.
 
-Não há API, dataframe, banco, paralelismo ou garantia transacional entre os dois
-arquivos de saída. O teste comprova comportamento local com o fixture versionado.
+## Resumo da ópera
+
+Cada linha precisa terminar em um lugar conhecido. Pedidos válidos vão para
+`valid.jsonl`. Pedidos inválidos vão para `rejected.jsonl` com uma explicação. Erros
+nos dados não interrompem o arquivo inteiro, mas uma falha na gravação interrompe o
+programa para evitar perda silenciosa.
