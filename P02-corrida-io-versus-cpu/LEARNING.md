@@ -14,17 +14,17 @@ sinal periódico e threads ou processos mudando o tempo e a capacidade de respos
 ## Medido
 
 - ambiente: Python 3.14.6, WSL2 x86_64, 32 CPUs lógicas visíveis.
-- I/O sequencial: mediana de 0,3043 s; sinal periódico atrasou no máximo 0,0003 s.
-- I/O concorrente: mediana de 0,0306 s; sinal periódico atrasou no máximo 0,0003 s.
-- I/O bloqueante: mediana de 0,3012 s; sinal periódico atrasou 0,2914 s.
-- Cálculo direto: 0,1241 s; com `to_thread`: 0,1282 s; com processos: 0,0450 s.
+- I/O sequencial: mediana de 2,51 s; sinal periódico atrasou menos de 0,01 s.
+- I/O concorrente: mediana de 0,25 s; sinal periódico atrasou menos de 0,01 s.
+- I/O bloqueante: mediana de 2,58 s; sinal periódico atrasou 2,57 s.
+- Cálculo direto: 2,20 s; com `to_thread`: 2,15 s; com processos: 0,71 s.
 - Verificação: resultados iguais por categoria, 5 testes passaram, Ruff e Pyright
   não encontraram erros.
 
 Neste ambiente, `to_thread` permitiu que o sinal periódico fosse atendido com mais
 frequência, mas não acelerou os cálculos em Python. Os processos apresentaram a
-menor mediana, embora a primeira repetição tenha demorado mais por incluir a criação
-dos processos.
+menor mediana. A primeira repetição com processos demorou 0,77 s e as seguintes
+ficaram próximas de 0,71 s.
 
 ## Escolha e consequência
 

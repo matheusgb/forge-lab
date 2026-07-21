@@ -8,4 +8,6 @@ def test_loads_versioned_scenario() -> None:
 
     assert scenario.repetitions == 5
     assert scenario.io.operations == 10
+    assert scenario.io.delay_seconds == 0.25
     assert len(scenario.cpu.inputs) == 4
+    assert min(scenario.cpu.inputs) == 8_000_000

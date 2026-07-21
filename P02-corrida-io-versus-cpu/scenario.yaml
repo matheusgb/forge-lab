@@ -4,10 +4,10 @@
   "heartbeat_interval_seconds": 0.01,
   "io": {
     "operations": 10,
-    "delay_seconds": 0.03
+    "delay_seconds": 0.25
   },
   "cpu": {
-    "inputs": [500000, 500013, 500029, 500041],
+    "inputs": [8000000, 8000013, 8000029, 8000041],
     "process_workers": 4
   },
   "timeout_seconds": 120

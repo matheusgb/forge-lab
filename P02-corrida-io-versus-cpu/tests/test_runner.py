@@ -24,3 +24,5 @@ def test_runner_separates_io_and_cpu_and_repeats() -> None:
     assert "CPU" in table
     assert "asyncio.gather" in table
     assert "processos" in table
+    assert "velocidade" in table
+    assert "1,00x" in table
