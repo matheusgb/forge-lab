@@ -1,0 +1,45 @@
+Cenário: circuito-e-portao-locais
+Circuito:
+t=0.0s ação=falha-1 resultado=provider_failure estado=closed falhas=1 chamadas_provider=1 tokens=2.0
+t=0.0s ação=falha-2 resultado=provider_failure estado=closed falhas=2 chamadas_provider=2 tokens=1.0
+t=0.0s ação=falha-3 resultado=provider_failure estado=open falhas=3 chamadas_provider=3 tokens=0.0
+t=0.0s ação=chamada-imediata resultado=circuit_rejected estado=open falhas=3 chamadas_provider=3 tokens=0.0
+t=5.0s ação=sonda-half-open-com-falha resultado=provider_failure estado=open falhas=3 chamadas_provider=4 tokens=2.0
+t=10.0s ação=sonda-half-open-com-sucesso resultado=success estado=closed falhas=0 chamadas_provider=5 tokens=2.0
+Rajada:
+t=0.0s volume=5 permitidas=3 recusadas=2 chamadas_provider=3
+t=1.0s chamada-após-reposição=success chamadas_provider=4 tokens=0.0
+Segredo:
+segredo_encontrado_nos_logs=false
+Logs capturados:
+INFO provider_guard.client provider_request endpoint=https://provider.test
+INFO provider_guard.provider provider_result call=1 outcome=failure
+INFO provider_guard.circuit circuit_failure state=closed consecutive_failures=1 threshold=3
+INFO provider_guard.client provider_request endpoint=https://provider.test
+INFO provider_guard.provider provider_result call=2 outcome=failure
+INFO provider_guard.circuit circuit_failure state=closed consecutive_failures=2 threshold=3
+INFO provider_guard.client provider_request endpoint=https://provider.test
+INFO provider_guard.provider provider_result call=3 outcome=failure
+INFO provider_guard.circuit circuit_failure state=closed consecutive_failures=3 threshold=3
+INFO provider_guard.circuit circuit_transition previous=closed current=open
+INFO provider_guard.circuit circuit_rejected state=open retry_after=5.00
+INFO provider_guard.circuit circuit_transition previous=open current=half_open
+INFO provider_guard.circuit circuit_probe_started state=half_open
+INFO provider_guard.client provider_request endpoint=https://provider.test
+INFO provider_guard.provider provider_result call=4 outcome=failure
+INFO provider_guard.circuit circuit_transition previous=half_open current=open
+INFO provider_guard.circuit circuit_transition previous=open current=half_open
+INFO provider_guard.circuit circuit_probe_started state=half_open
+INFO provider_guard.client provider_request endpoint=https://provider.test
+INFO provider_guard.provider provider_result call=5 outcome=success
+INFO provider_guard.circuit circuit_transition previous=half_open current=closed
+INFO provider_guard.client provider_request endpoint=https://provider.test
+INFO provider_guard.provider provider_result call=1 outcome=success
+INFO provider_guard.client provider_request endpoint=https://provider.test
+INFO provider_guard.provider provider_result call=2 outcome=success
+INFO provider_guard.client provider_request endpoint=https://provider.test
+INFO provider_guard.provider provider_result call=3 outcome=success
+INFO provider_guard.client rate_limit_rejected endpoint=https://provider.test
+INFO provider_guard.client rate_limit_rejected endpoint=https://provider.test
+INFO provider_guard.client provider_request endpoint=https://provider.test
+INFO provider_guard.provider provider_result call=4 outcome=success
