@@ -1,35 +1,55 @@
 # P01: Normalizador JSONL tipado
 
-Arquivos recebidos de outros sistemas nem sempre chegam perfeitos. Um pedido pode
-ter uma moeda desconhecida, uma data inválida ou até um JSON incompleto. O programa
-não deve esconder essas linhas nem descartar todo o arquivo por causa de um erro.
-
-Este laboratório cria um programa de linha de comando que classifica cada pedido
-como válido ou rejeitado e registra o motivo da decisão.
+Este projeto recebe pedidos com dados imperfeitos e garante que cada linha termine
+classificada como válida ou rejeitada.
 
 ## Como o programa funciona
 
-O arquivo de entrada usa JSONL, um formato no qual cada linha contém um JSON
-independente. Isso permite continuar depois de uma linha inválida.
+O programa lê um arquivo JSONL, formato no qual cada linha contém um JSON independente.
+Ele valida e normaliza um pedido por vez. Pedidos válidos vão para `valid.jsonl`.
+Pedidos inválidos vão para `rejected.jsonl` com o número da linha e o motivo.
 
 ```text
-linha do arquivo
-      |
-      v
+orders-mixed.jsonl
+        |
+        v
 validar e normalizar
-      |
-      +--> pedido válido  --> valid.jsonl
-      |
-      +--> pedido inválido --> rejected.jsonl
+   |             |
+   v             v
+valid.jsonl   rejected.jsonl
 ```
 
-No final, esta regra precisa ser verdadeira:
+Ao final, o programa verifica esta regra:
 
 ```text
 total de linhas = válidas + rejeitadas
 ```
 
-## Preparação e execução
+Moeda, data, valor, tags e espaços são normalizados. Uma falha nos dados rejeita apenas
+a linha atual. Uma falha de escrita encerra o programa, pois continuar poderia causar
+perda silenciosa.
+
+## Conceito abordado
+
+O projeto aborda modelagem tipada e tratamento explícito de erros. `dataclass` e
+`Enum` definem formatos válidos. `Result[T]` informa se o processamento produziu um
+pedido ou um erro conhecido. Exceções de domínio preservam a causa original para
+facilitar o diagnóstico.
+
+O código também usa coleções adequadas para cada papel: listas mantêm a ordem, sets
+removem tags repetidas, tuplas representam dados imutáveis e dicionários acumulam
+contagens.
+
+## Para que isso serve em produção
+
+Integrações recebem planilhas, eventos e arquivos de parceiros com dados incompletos.
+O sistema precisa aproveitar registros corretos sem esconder os incorretos.
+
+Exemplo: um marketplace importa mil pedidos. Dois contêm uma moeda desconhecida. O
+normalizador envia 998 pedidos válidos ao próximo estágio e separa os outros dois com
+um motivo claro para correção. A soma das saídas prova que nenhum pedido desapareceu.
+
+## Como executar
 
 ```bash
 make setup
@@ -37,15 +57,7 @@ make check
 make experiment
 ```
 
-O experimento processa seis pedidos:
-
-```text
-6 linhas recebidas
-2 pedidos válidos
-4 pedidos rejeitados
-```
-
-A CLI também pode ser executada diretamente:
+Para executar a CLI diretamente:
 
 ```bash
 uv run normalize-orders \
@@ -54,49 +66,25 @@ uv run normalize-orders \
   output/rejected.jsonl
 ```
 
-O resumo confirma que nenhuma linha desapareceu:
+## Resultado observado
+
+O cenário misto processou seis linhas: duas válidas e quatro rejeitadas. Os oito testes,
+o Ruff e o Pyright passaram. O teste de escrita gerou `OutputWriteError` e preservou o
+`OSError` original como causa.
 
 ```json
 {"total":6,"valid":2,"rejected":4,"invariant":true}
 ```
 
-`invariant: true` significa que `6 = 2 + 4`.
+O resultado completo está em `evidence/result.txt`.
 
-## O que é normalizado
+## Limite do projeto
 
-- A moeda passa para letras maiúsculas, como `brl` para `BRL`.
-- A data passa para UTC, um fuso horário comum entre sistemas.
-- O valor monetário passa a ter duas casas decimais.
-- Tags repetidas são removidas.
-- Espaços desnecessários são removidos dos textos.
-
-Se uma linha tiver moeda desconhecida, data impossível, campo obrigatório ausente
-ou JSON inválido, ela será gravada em `rejected.jsonl` com o número da linha e o
-motivo da rejeição.
-
-## Conceitos de Python usados
-
-- `dataclass` representa pedidos, valores monetários e resumos.
-- `Enum` limita as moedas e os códigos de erro aceitos.
-- `Result[T]` representa um pedido válido ou um erro conhecido.
-- `list`, `tuple`, `set` e `dict` organizam tags, IDs e contagens.
-- O gerenciador de contexto garante que os arquivos sejam fechados.
-- `raise ... from error` preserva o erro original para diagnóstico.
-
-## Quando o programa deve parar
-
-Um erro nos dados afeta apenas a linha atual. O programa registra a rejeição e segue
-para a próxima linha. Uma falha ao gravar os arquivos é diferente. Nesse caso, o
-programa para porque continuar poderia fazer pedidos desaparecerem sem registro.
-
-## Limite do laboratório
-
-Os dois arquivos de saída não são gravados como uma única operação indivisível. O
-projeto também não possui API, banco de dados ou processamento paralelo.
+Os dois arquivos de saída não formam uma transação única. Uma interrupção entre as
+gravações pode deixá-los incompletos. Um sistema real poderia gravar arquivos
+temporários e renomeá-los ao final, ou usar um armazenamento transacional.
 
 ## Resumo da ópera
 
-Cada linha precisa terminar em um lugar conhecido. Pedidos válidos vão para
-`valid.jsonl`. Pedidos inválidos vão para `rejected.jsonl` com uma explicação. Erros
-nos dados não interrompem o arquivo inteiro, mas uma falha na gravação interrompe o
-programa para evitar perda silenciosa.
+Dados ruins não precisam derrubar o lote inteiro, mas também não podem sumir. Tipos,
+erros de domínio e uma regra de contagem tornam cada decisão explícita e auditável.

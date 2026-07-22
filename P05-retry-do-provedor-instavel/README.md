@@ -1,22 +1,50 @@
-# P05: quando vale a pena tentar novamente?
+# P05: Quando vale a pena tentar novamente?
 
-Um provedor externo pode falhar por alguns segundos e voltar ao normal. Repetir a
-chamada pode resolver o problema. Também pode duplicar uma cobrança, um pedido ou outro
-efeito que já aconteceu.
+Este projeto cria um cliente HTTP que repete falhas temporárias somente quando a
+operação pode ser executada de novo com segurança.
 
-Este projeto cria um cliente HTTP que só repete operações consideradas seguras.
+## Como o programa funciona
 
-## Pergunta principal
+Um provider fake devolve sequências previsíveis de respostas, como `500, 500, 200`,
+`429, 200`, timeout ou `400`. O cliente classifica a falha e a operação antes de decidir
+se tenta novamente.
 
-> Como repetir uma chamada após uma falha temporária sem repetir uma operação perigosa?
+```text
+chamada HTTP
+     |
+     v
+classificar falha e operação
+     |
+     +--> segura e temporária --> esperar --> tentar novamente
+     |
+     +--> definitiva ou insegura --> parar
+```
 
-O cliente observa duas informações:
+O cliente aumenta o intervalo entre tentativas, adiciona uma pequena variação e
+respeita o cabeçalho `Retry-After`. Relógio, espera e aleatoriedade são injetados, então
+os testes não usam `sleep` real.
 
-- o tipo da falha;
-- se a operação pode ser executada novamente sem criar outro efeito.
+## Conceito abordado
 
-Uma operação com essa segunda propriedade é chamada de idempotente. Ler o mesmo recurso
-duas vezes costuma ser seguro. Criar o mesmo pagamento duas vezes não é.
+Retry é a repetição controlada de uma operação após uma falha. Backoff exponencial
+aumenta o intervalo entre as tentativas. Jitter adiciona variação para evitar que muitos
+clientes repitam ao mesmo tempo.
+
+Idempotência significa que repetir uma operação produz o mesmo efeito lógico. Uma
+leitura costuma ser idempotente. Criar um pagamento sem uma chave de idempotência pode
+gerar duas cobranças.
+
+## Para que isso serve em produção
+
+Integrações externas apresentam timeouts, limites de uso e indisponibilidades curtas.
+Um retry bem definido recupera parte dessas falhas sem aumentar uma sobrecarga ou
+duplicar efeitos.
+
+Exemplo: um serviço consulta o status de uma entrega e recebe `503`. Ele espera, tenta
+novamente e obtém sucesso. Se o mesmo timeout ocorrer depois do envio de um pagamento,
+o cliente para porque não sabe se o provedor processou a primeira chamada. Ele só
+poderia repetir com uma garantia explícita, como uma chave de idempotência aceita pelo
+provedor.
 
 ## Como executar
 
@@ -26,91 +54,34 @@ make check
 make experiment
 ```
 
-O experimento imprime cada tentativa, as esperas calculadas e a decisão final. O mesmo
-resultado fica salvo em `evidence/result.txt`.
+O experimento imprime as tentativas e salva o resultado em `evidence/result.txt`. A
+política completa está em `evidence/decision-matrix.md`.
 
-## O que o provider fake faz
+## Política testada
 
-O provider fake usa o transporte de teste do `httpx2`. Ele não acessa a internet. Cada
-cenário define antecipadamente o que acontecerá em cada chamada:
-
-```text
-500, 500, 200
-429, 200
-timeout, 200
-400
-500 em uma operação não idempotente
-```
-
-Isso permite repetir exatamente a mesma falha em todos os testes.
-
-## Quais falhas são repetidas?
-
-| Resultado | Decisão para uma leitura segura |
-| --- | --- |
-| `2xx` | devolver a resposta |
-| `400` | parar imediatamente |
-| `429` | esperar e tentar novamente |
-| `5xx` | esperar e tentar novamente |
-| timeout | esperar e tentar novamente |
-
-O status `400` indica um problema na requisição. Repetir os mesmos dados não deve
-corrigi-lo. Os status `5xx` indicam uma falha no servidor e podem ser temporários. O
-status `429` informa que o cliente enviou chamadas demais.
-
-A matriz completa, incluindo a operação não idempotente, está em
-`evidence/decision-matrix.md`.
-
-## Backoff, jitter e `Retry-After`
-
-O cliente não repete a chamada imediatamente. Ele usa backoff exponencial, que aumenta
-a espera depois de cada falha:
-
-```text
-0,5 s, 1,0 s, 2,0 s...
-```
-
-O jitter acrescenta uma pequena variação aleatória. Essa variação reduz a chance de
-muitos clientes repetirem a chamada no mesmo instante.
-
-Quando o provedor devolve `Retry-After`, o cliente respeita o tempo indicado. O
-cabeçalho pode conter uma quantidade de segundos ou uma data HTTP.
-
-Nos testes, relógio, espera e valor aleatório são objetos injetados. Nenhum teste usa
-`sleep` real. O código apenas registra quanto tempo teria esperado.
-
-## Timeouts
-
-O cliente configura limites separados para conexão e leitura:
-
-- connect timeout: tempo máximo para abrir a conexão;
-- read timeout: tempo máximo para receber dados depois da conexão.
-
-Um timeout não informa se o provedor concluiu a operação antes de a resposta se perder.
-Por isso, o projeto não repete uma criação não idempotente após timeout ou `5xx`.
+| Resultado | Leitura idempotente | Criação não idempotente |
+| --- | --- | --- |
+| `2xx` | devolver resposta | devolver resposta |
+| `400` | parar | parar |
+| `429` | tentar novamente | parar |
+| `5xx` | tentar novamente | parar |
+| timeout | tentar novamente | parar |
 
 ## Resultado observado
 
-Com três tentativas e um valor aleatório fixo, o experimento produziu:
+Dezessete testes, Ruff e Pyright passaram. O cenário `500, 500, 200` concluiu em três
+tentativas com esperas simuladas de 0,55 e 1,10 segundo. O `429` respeitou dois segundos
+de `Retry-After`. O `400` e o `500` em uma criação insegura pararam na primeira
+tentativa. Nenhuma espera real ocorreu.
 
-| Cenário | Tentativas | Esperas | Decisão final |
-| --- | ---: | --- | --- |
-| `500, 500, 200` | 3 | 0,55 s e 1,10 s | sucesso |
-| `429, 200` | 2 | 2,00 s | sucesso |
-| `timeout, 200` | 2 | 0,55 s | sucesso |
-| `400` | 1 | nenhuma | erro definitivo |
-| `POST` com `500` | 1 | nenhuma | operação insegura |
+## Limite do projeto
 
-## Limite do que foi comprovado
-
-O provider é um fake em memória. O projeto não mede a disponibilidade de um serviço
-real e não implementa circuit breaker, rate limit ou chave de idempotência.
-
-O experimento comprova apenas a política local: falhas temporárias são repetidas dentro
-do limite quando a operação é segura. Uma criação insegura para na primeira falha.
+O provider existe apenas em memória. O projeto não testa rede real, circuit breaker ou
+rate limit. Ele também não envia chave de idempotência, pois essa garantia depende do
+contrato de cada provedor.
 
 ## Resumo da ópera
 
-Retry não significa repetir qualquer erro. O cliente deve reconhecer falhas temporárias,
-limitar as tentativas, aumentar a espera e considerar o efeito da operação. Quando não
-há garantia de idempotência, parar pode ser mais seguro do que tentar novamente.
+Retry exige classificação. Repita apenas falhas temporárias, limite as tentativas e
+considere o efeito da operação. Quando a idempotência não está garantida, parar pode ser
+mais seguro do que tentar novamente.

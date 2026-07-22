@@ -1,52 +1,47 @@
 # P02: Corrida I/O versus CPU
 
-Concorrência não acelera todo tipo de código da mesma forma. Esperar uma resposta da
-rede é diferente de executar um cálculo pesado. Por isso, este laboratório contém
-dois experimentos separados: um para operações de I/O e outro para cálculos que usam
-a CPU.
+Este projeto compara formas de executar operações que esperam I/O e cálculos que usam
+CPU. Os dois grupos são medidos separadamente porque resolvem problemas diferentes.
 
-O objetivo não é colocar I/O contra CPU para descobrir qual dos dois é mais rápido.
-Essa comparação não faria sentido porque são problemas diferentes. A comparação
-acontece apenas entre estratégias que resolvem o mesmo problema.
+## Como o programa funciona
 
-## As duas situações
+O primeiro experimento simula dez chamadas externas com 250 milissegundos de espera.
+Ele executa essas chamadas em sequência, com `asyncio.gather` e com uma função
+bloqueante dentro do código assíncrono.
 
-Uma operação de I/O passa boa parte do tempo esperando algo externo, como rede,
-disco ou banco de dados. Enquanto uma operação espera, o programa pode iniciar outra.
+O segundo experimento executa quatro cálculos iguais. Ele compara execução direta,
+threads e processos. Uma tarefa de heartbeat tenta rodar a cada 10 milissegundos para
+mostrar quando o event loop deixa de responder.
 
-Uma operação que usa muita CPU passa o tempo executando cálculos. Nesse caso, não há
-uma espera livre para ser aproveitada. Para executar vários cálculos ao mesmo tempo,
-podem ser necessários processos separados.
+| Tipo de carga | Estratégias comparadas |
+| --- | --- |
+| espera de I/O | sequencial, `asyncio.gather`, chamada bloqueante |
+| cálculo em Python | direto, `asyncio.to_thread`, processos |
 
-No experimento de I/O, todas as estratégias simulam as mesmas dez operações externas,
-com 250 milissegundos de espera em cada uma. No experimento de CPU, todas executam
-os mesmos quatro cálculos, com cerca de 8 milhões de iterações por cálculo. Os
-resultados só são comparados dentro de cada grupo.
+Todas as estratégias de um mesmo grupo recebem as mesmas entradas e precisam produzir
+os mesmos resultados.
 
-## O que o experimento compara
+## Conceito abordado
 
-| Situação | Estratégia | Comportamento |
-| --- | --- | --- |
-| Espera de I/O | sequencial | inicia a próxima operação depois que a anterior termina |
-| Espera de I/O | `asyncio.gather` | inicia várias operações antes de aguardar os resultados |
-| Espera de I/O | `time.sleep` | bloqueia o código assíncrono |
-| Cálculo | execução direta | executa um cálculo depois do outro |
-| Cálculo | `asyncio.to_thread` | envia os cálculos para threads |
-| Cálculo | processos | executa os cálculos em processos separados |
+Concorrência permite avançar mais de uma operação no mesmo intervalo. Ela ajuda quando
+o programa passa tempo esperando rede, disco ou banco. `asyncio` coordena essas esperas
+por meio do event loop.
 
-As três estratégias de I/O recebem as mesmas operações e precisam devolver os mesmos
-dez resultados. As três estratégias de CPU recebem os mesmos cálculos e precisam
-devolver os mesmos quatro resultados. Assim, cada comparação muda apenas a forma de
-execução, sem misturar os dois problemas.
+Paralelismo executa cálculos ao mesmo tempo. No CPython tradicional, o GIL limita a
+execução simultânea de código Python em threads. Processos usam interpretadores
+separados e podem aproveitar vários núcleos, mas possuem custo de criação e comunicação.
 
-## Como o bloqueio fica visível
+## Para que isso serve em produção
 
-O `event loop` coordena as tarefas assíncronas. Durante o experimento, uma pequena
-tarefa tenta executar a cada 10 milissegundos. Ela funciona como um sinal periódico.
-Se esse sinal atrasar muito, significa que o `event loop` ficou impedido de atender
-outras tarefas.
+A escolha errada pode deixar uma API lenta mesmo quando há recursos disponíveis.
 
-## Preparação e execução
+Exemplo: um endpoint consulta dez serviços independentes. Se ele esperar cada resposta
+antes de iniciar a próxima, as latências se somam. Com chamadas HTTP assíncronas, ele
+pode iniciar todas e aguardar o conjunto. Se o endpoint também gerar um relatório com
+cálculo pesado, esse cálculo não deve rodar diretamente no event loop. Ele pode ir para
+um processo ou para um worker separado.
+
+## Como executar
 
 ```bash
 make setup
@@ -54,52 +49,34 @@ make check
 make demo
 ```
 
-`make demo` executa cada estratégia cinco vezes, mostra a mediana dos tempos e grava
-os resultados completos em `output/results.json`. A demonstração leva cerca de 50
-segundos neste ambiente.
+`make demo` executa cada estratégia cinco vezes, calcula a mediana e grava os dados em
+`output/results.json`.
 
-A coluna `velocidade` compara cada estratégia com a execução básica do seu próprio
-grupo. `10,00x`, por exemplo, significa que aquela estratégia terminou dez vezes
-mais rápido. I/O continua sendo comparado apenas com I/O, e CPU apenas com CPU.
+## Resultado observado
 
-Uma execução local produziu valores próximos destes:
+No ambiente descrito em `evidence/results.md`, a execução produziu:
 
-| Situação | Estratégia | Tempo mediano | Maior atraso do sinal |
+| Situação | Estratégia | Tempo mediano | Maior atraso do heartbeat |
 | --- | --- | ---: | ---: |
-| I/O | espera sequencial | 2,51 s | menos de 0,01 s |
+| I/O | sequencial | 2,51 s | menos de 0,01 s |
 | I/O | `asyncio.gather` | 0,25 s | menos de 0,01 s |
-| I/O | `time.sleep` bloqueante | 2,58 s | 2,57 s |
-| CPU | execução direta | 2,20 s | 2,20 s |
+| I/O | chamada bloqueante | 2,58 s | 2,57 s |
+| CPU | direta | 2,20 s | 2,20 s |
 | CPU | `asyncio.to_thread` | 2,15 s | 0,14 s |
 | CPU | processos | 0,71 s | 0,06 s |
 
-Os números variam conforme o computador. O ponto importante é o comportamento:
-`asyncio.gather` terminou as operações de I/O quase 10 vezes mais rápido, enquanto
-`time.sleep` impediu o `event loop` de responder por 2,57 segundos. As threads não
-aceleraram os cálculos, mas reduziram o atraso do sinal periódico. Os processos
-terminaram estes cálculos cerca de 3 vezes mais rápido neste computador.
+O `gather` reduziu o tempo das esperas concorrentes. As threads melhoraram a resposta
+do event loop, mas não aceleraram o cálculo. Os processos foram mais rápidos neste
+cenário. Os números variam conforme o computador.
 
-## Onde entra o GIL
+## Limite do projeto
 
-No CPython tradicional, o GIL limita a execução simultânea de código Python em
-threads. Por isso, enviar estes cálculos para `asyncio.to_thread` não reduziu o tempo
-total. As threads ainda permitiram que o `event loop` atendesse outras tarefas com
-mais frequência.
-
-Processos possuem interpretadores separados e conseguem usar vários núcleos para
-cálculos em Python. Em troca, custa tempo criar os processos e enviar dados para eles.
-
-## Limite do laboratório
-
-Este é um teste pequeno e local. Ele não determina qual estratégia será mais rápida
-em produção, não compara linguagens e não representa cálculos de aprendizado de
-máquina. A decisão real precisa ser medida com a carga e o ambiente do sistema.
+O pool de processos é recriado em cada repetição, então parte do tempo medido vem da
+inicialização. O teste é local, curto e sintético. Ele não define a melhor estratégia
+para outra carga ou ambiente.
 
 ## Resumo da ópera
 
-I/O e CPU representam problemas diferentes e não competem entre si neste laboratório.
-Cada grupo serve para comparar estratégias adequadas ao seu próprio tipo de problema.
-Use código assíncrono quando várias operações passam tempo esperando I/O. Não execute
-funções bloqueantes diretamente no `event loop`. Threads podem afastar essas funções
-do código assíncrono, mas não garantem cálculos mais rápidos. Para executar cálculos
-Python em paralelo, processos são uma opção, desde que o ganho compense seu custo.
+Use operações assíncronas quando o programa espera I/O. Não execute código bloqueante
+ou cálculo pesado no event loop. Threads podem preservar a capacidade de resposta.
+Processos podem paralelizar cálculo em Python quando o ganho compensa o custo.
