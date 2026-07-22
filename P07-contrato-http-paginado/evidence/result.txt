@@ -1,0 +1,8 @@
+Cenário: comentarios-paginados-com-insercao-no-topo
+Baseline por cursor: páginas=((6, 5), (4, 3), (2, 1)); itens=(6, 5, 4, 3, 2, 1)
+OFFSET após inserção: páginas=((6, 5), (5, 4), (3, 2), (1,)); itens=(6, 5, 5, 4, 3, 2, 1)
+Cursor após inserção: páginas=((6, 5), (4, 3), (2, 1)); itens=(6, 5, 4, 3, 2, 1)
+Nova leitura: primeira página=(7, 6)
+Contrato v2 compatível: itens=(1,)
+Contrato incompatível: items[0].body: campo obrigatório ausente
+Cursor em loop: cursor repetido: loop

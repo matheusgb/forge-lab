@@ -1,0 +1,16 @@
+{
+  "name": "comentarios-paginados-com-insercao-no-topo",
+  "seed": 0,
+  "concurrency": 1,
+  "repetitions": 1,
+  "duration_seconds": 0.0,
+  "page_size": 2,
+  "initial_comment_ids": [6, 5, 4, 3, 2, 1],
+  "insert_after_page": 1,
+  "new_comment_id": 7,
+  "compatible_field": "author_badge",
+  "incompatible_rename": {
+    "from": "body",
+    "to": "text"
+  }
+}
