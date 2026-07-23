@@ -27,6 +27,10 @@ O conceito é a reprodutibilidade do ambiente. Um ambiente é reproduzível quan
 pessoa consegue instalar as mesmas versões e executar as mesmas verificações a partir
 dos arquivos versionados no Git.
 
+O Typer representa uma dependência direta, pois a aplicação precisa dele para executar
+a CLI. Ruff, Pyright e pytest são dependências de desenvolvimento, pois eles verificam
+o projeto, mas não participam da execução da aplicação.
+
 | Arquivo | Função |
 | --- | --- |
 | `.python-version` | seleciona o Python usado nesta pasta |
@@ -48,30 +52,37 @@ de forma explícita.
 ## Como executar
 
 ```bash
-make setup
-make check
-make demo
+uv sync --locked
+uv run ruff check .
+uv run pyright
+uv run pytest
+uv run p00 ForgeLab
 ```
 
-`make setup` cria a `.venv`. Os comandos usam `uv run`, então não é necessário ativar
-o ambiente manualmente.
+`uv sync --locked` cria a `.venv`. O `uv run` executa cada ferramenta nesse ambiente,
+então não é necessário ativá-lo manualmente.
 
 Para apagar o ambiente e provar que ele pode ser reconstruído:
 
 ```bash
-make clean
-make setup
-make check
+rm -rf .venv .pytest_cache .ruff_cache
+uv sync --locked
+uv run ruff check .
+uv run pyright
+uv run pytest
 ```
 
 ## Falha controlada
 
 ```bash
-make experiment
+uv run pyright --project experiments/pyright-missing.json
+uv run pyright --project experiments/pyright-type.json
 ```
 
 O experimento apresenta uma dependência ausente e uma atribuição de texto onde o código
-espera um número. Ele só passa quando o Pyright encontra os dois erros.
+espera um número. Cada comando deve terminar com falha e apontar, respectivamente,
+`reportMissingImports` e `reportAssignmentType`. Os comandos ficam visíveis porque a
+falha do verificador é o próprio objeto deste experimento.
 
 ## Resultado observado
 

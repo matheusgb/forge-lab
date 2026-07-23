@@ -1,11 +1,15 @@
-Medido em: 2026-07-20
+Medido em: 2026-07-22
 Plataforma: WSL2 x86_64
 Python: 3.14.6
 pyenv: 2.8.1
 uv: 0.11.29
 
-Comando:
-  make clean && make setup && make check
+Comandos:
+  rm -rf .venv .pytest_cache .ruff_cache
+  uv sync --locked
+  uv run ruff check .
+  uv run pyright
+  uv run pytest
 
 Resultado:
   ambiente recriado a partir do uv.lock
@@ -13,8 +17,9 @@ Resultado:
   Pyright: 0 erros, 0 avisos
   pytest: 2 testes passaram
 
-Experimento:
-  make experiment
+Experimentos:
+  uv run pyright --project experiments/pyright-missing.json
+  uv run pyright --project experiments/pyright-type.json
 
 Resultado:
   dependência ausente detectada por reportMissingImports
