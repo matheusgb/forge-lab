@@ -1,9 +1,13 @@
-from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from enum import StrEnum
+from typing import Annotated
 
-from order_normalizer.errors import NormalizationError
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StringConstraints, field_validator
+
+from order_normalizer.errors import ErrorCode
+
+NonEmptyText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
 
 class Currency(StrEnum):
@@ -12,26 +16,45 @@ class Currency(StrEnum):
     USD = "USD"
 
 
-@dataclass(frozen=True)
-class Money:
-    amount: Decimal
+class Order(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True, str_strip_whitespace=True)
+
+    order_id: NonEmptyText
+    created_at: AwareDatetime
+    amount: Decimal = Field(gt=0)
     currency: Currency
+    tags: tuple[NonEmptyText, ...] = ()
+    note: str | None = None
+
+    @field_validator("currency", mode="before")
+    @classmethod
+    def normalize_currency(cls, value: object) -> object:
+        return value.strip().upper() if isinstance(value, str) else value
+
+    @field_validator("created_at")
+    @classmethod
+    def normalize_date(cls, value: datetime) -> datetime:
+        return value.astimezone(UTC)
+
+    @field_validator("amount")
+    @classmethod
+    def normalize_amount(cls, value: Decimal) -> Decimal:
+        return value.quantize(Decimal("0.01"))
+
+    @field_validator("tags")
+    @classmethod
+    def normalize_tags(cls, tags: tuple[str, ...]) -> tuple[str, ...]:
+        return tuple(dict.fromkeys(tag.lower() for tag in tags))
+
+    @field_validator("note")
+    @classmethod
+    def normalize_note(cls, note: str | None) -> str | None:
+        return note or None
 
 
-@dataclass(frozen=True)
-class Order:
-    order_id: str
-    created_at: datetime
-    total: Money
-    tags: tuple[str, ...]
-    note: str | None
-
-
-@dataclass(frozen=True)
-class Result[T]:
-    value: T | None = None
-    error: NormalizationError | None = None
-
-    @property
-    def is_success(self) -> bool:
-        return self.error is None
+class RejectedRecord(BaseModel):
+    line: int
+    code: ErrorCode
+    field: str | None
+    message: str
+    raw: str

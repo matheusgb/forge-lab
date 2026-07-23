@@ -1,28 +1,25 @@
-import argparse
 import json
-from collections.abc import Sequence
 from pathlib import Path
+from typing import Annotated
+
+import typer
 
 from order_normalizer.errors import OutputWriteError
 from order_normalizer.processor import process_file
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Normaliza pedidos JSONL")
-    parser.add_argument("input", type=Path, help="arquivo JSONL de entrada")
-    parser.add_argument("valid", type=Path, help="saída com pedidos válidos")
-    parser.add_argument("rejected", type=Path, help="saída com linhas rejeitadas")
-    return parser
-
-
-def main(argv: Sequence[str] | None = None) -> None:
-    args = build_parser().parse_args(argv)
+def normalize_orders(
+    input_path: Annotated[Path, typer.Argument(help="Arquivo JSONL de entrada")],
+    valid_path: Annotated[Path, typer.Argument(help="Saída com pedidos válidos")],
+    rejected_path: Annotated[Path, typer.Argument(help="Saída com linhas rejeitadas")],
+) -> None:
     try:
-        summary = process_file(args.input, args.valid, args.rejected)
+        summary = process_file(input_path, valid_path, rejected_path)
     except OutputWriteError as error:
-        raise SystemExit(f"output error: {error}") from error
+        typer.echo(f"output error: {error}", err=True)
+        raise typer.Exit(code=1) from error
 
-    print(
+    typer.echo(
         json.dumps(
             {
                 "total": summary.total,
@@ -33,3 +30,7 @@ def main(argv: Sequence[str] | None = None) -> None:
             separators=(",", ":"),
         )
     )
+
+
+def main() -> None:
+    typer.run(normalize_orders)

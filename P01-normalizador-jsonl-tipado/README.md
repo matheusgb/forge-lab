@@ -31,14 +31,14 @@ perda silenciosa.
 
 ## Conceito abordado
 
-O projeto aborda modelagem tipada e tratamento explícito de erros. `dataclass` e
-`Enum` definem formatos válidos. `Result[T]` informa se o processamento produziu um
-pedido ou um erro conhecido. Exceções de domínio preservam a causa original para
-facilitar o diagnóstico.
+O projeto aborda modelagem tipada e tratamento explícito de erros. O Pydantic converte
+o JSON em um `Order` e concentra as regras dos campos no próprio modelo. O fluxo não
+precisa repetir verificações de tipo para cada valor recebido.
 
-O código também usa coleções adequadas para cada papel: listas mantêm a ordem, sets
-removem tags repetidas, tuplas representam dados imutáveis e dicionários acumulam
-contagens.
+Quando o Pydantic rejeita uma linha, o normalizador traduz o diagnóstico para uma única
+exceção de domínio com código, campo e número da linha. O laço captura essa exceção,
+grava a rejeição e continua. Uma falha de escrita usa outra exceção e encerra o lote.
+Um `set` detecta IDs repetidos e um `Counter` acumula os motivos das rejeições.
 
 ## Para que isso serve em produção
 
@@ -52,25 +52,27 @@ um motivo claro para correção. A soma das saídas prova que nenhum pedido desa
 ## Como executar
 
 ```bash
-make setup
-make check
-make experiment
+uv sync --locked
+uv run ruff check .
+uv run pyright
+uv run pytest
 ```
 
-Para executar a CLI diretamente:
+Para executar o cenário misto:
 
 ```bash
 uv run normalize-orders \
   fixtures/orders-mixed.jsonl \
   output/valid.jsonl \
   output/rejected.jsonl
+uv run pytest tests/test_processor.py::test_output_error_preserves_os_error_as_cause -q
 ```
 
 ## Resultado observado
 
 O cenário misto processou seis linhas: duas válidas e quatro rejeitadas. Os oito testes,
-o Ruff e o Pyright passaram. O teste de escrita gerou `OutputWriteError` e preservou o
-`OSError` original como causa.
+o Ruff e o Pyright passaram. O Pydantic ficou restrito à validação do contrato. O teste
+de escrita gerou `OutputWriteError` e preservou o `OSError` original como causa.
 
 ```json
 {"total":6,"valid":2,"rejected":4,"invariant":true}

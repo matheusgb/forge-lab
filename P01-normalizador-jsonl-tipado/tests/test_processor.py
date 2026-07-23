@@ -5,6 +5,7 @@ from typing import TextIO, cast
 import pytest
 
 from order_normalizer.errors import ErrorCode, OutputWriteError
+from order_normalizer.models import RejectedRecord
 from order_normalizer.output import write_json_line
 from order_normalizer.processor import process_file
 
@@ -50,9 +51,10 @@ def test_duplicate_order_is_rejected(tmp_path: Path) -> None:
 
 def test_output_error_preserves_os_error_as_cause() -> None:
     stream = cast(TextIO, BrokenStream())
+    record = RejectedRecord(line=3, code=ErrorCode.INVALID_FIELD, field=None, message="x", raw="x")
 
     with pytest.raises(OutputWriteError) as captured:
-        write_json_line(stream, {"ok": True}, destination="broken", line_number=3)
+        write_json_line(stream, record, destination="broken", line_number=3)
 
     assert captured.value.code is ErrorCode.OUTPUT_WRITE_ERROR
     assert captured.value.line_number == 3

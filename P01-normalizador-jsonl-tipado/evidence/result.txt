@@ -1,10 +1,15 @@
-Medido em: 2026-07-20
+Medido em: 2026-07-22
 Plataforma: WSL2 x86_64
 Python: 3.14.6
 uv: 0.11.29
 
-Comando:
-  make clean && make setup && make check && make demo
+Comandos:
+  rm -rf .venv .pytest_cache .ruff_cache output
+  uv sync --locked
+  uv run ruff check .
+  uv run pyright
+  uv run pytest
+  uv run normalize-orders fixtures/orders-mixed.jsonl output/valid.jsonl output/rejected.jsonl
 
 Resultado dos gates:
   Ruff: todos os checks passaram
