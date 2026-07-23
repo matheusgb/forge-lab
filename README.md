@@ -7,8 +7,6 @@
   <img src="https://img.shields.io/badge/depend%C3%AAncias-uv-DE5FE9?logo=uv" alt="Dependências gerenciadas com uv">
 </p>
 
----
-
 **Treze microprojetos independentes para observar fundamentos de backend funcionando,
 falhando e se recuperando.**
 
