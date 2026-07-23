@@ -1,6 +1,8 @@
+import argparse
 from datetime import UTC, datetime
+from json import dumps
 from pathlib import Path
-from typing import Never
+from typing import Never, cast
 
 from pydantic import BaseModel, ConfigDict, PositiveInt
 
@@ -18,6 +20,35 @@ class Scenario(BaseModel):
     initial_comment_ids: tuple[int, ...]
     insert_after_page: PositiveInt
     new_comment_id: int
+
+
+class Arguments(argparse.Namespace):
+    step_by_step: bool = False
+
+
+class TracingProvider:
+    def __init__(self, provider: MutableCommentFeed) -> None:
+        self._provider = provider
+        self._page_number = 0
+
+    def get_page(self, cursor: str | None) -> object:
+        self._page_number += 1
+        print(f"Página {self._page_number}")
+        print(f"Chamada: provider.get_page(cursor={cursor!r})")
+
+        response = self._provider.get_page(cursor)
+        print("JSON recebido:")
+        print(dumps(response, ensure_ascii=False, indent=2))
+
+        payload = cast(dict[str, object], response)
+        next_cursor = payload.get("next_cursor")
+        print(f"next_cursor recebido: {dumps(next_cursor, ensure_ascii=False)}")
+        if next_cursor is None:
+            print("Decisão: o cliente encerra a paginação.")
+        else:
+            print("Decisão: o cliente envia esse cursor na próxima chamada.")
+        print()
+        return response
 
 
 def make_comment(comment_id: int) -> Comment:
@@ -64,6 +95,12 @@ def fail(message: str) -> Never:
     raise AssertionError(message)
 
 
+def load_scenario() -> tuple[Path, Scenario]:
+    project = Path(__file__).resolve().parents[1]
+    scenario = Scenario.model_validate_json((project / "scenario.yaml").read_text())
+    return project, scenario
+
+
 def contract_results() -> tuple[tuple[int, ...], str, str]:
     compatible = raw_comment(1) | {"author_badge": "top contributor"}
     compatible_ids = (
@@ -104,8 +141,7 @@ def contract_results() -> tuple[tuple[int, ...], str, str]:
 
 
 def run() -> str:
-    project = Path(__file__).resolve().parents[1]
-    scenario = Scenario.model_validate_json((project / "scenario.yaml").read_text())
+    project, scenario = load_scenario()
     baseline = PaginatedClient(build_feed(scenario)).fetch_all()
     offset = walk_offset(build_feed(scenario, schedule_insert=True))
     cursor_feed = build_feed(scenario, schedule_insert=True)
@@ -129,5 +165,39 @@ def run() -> str:
     return output
 
 
+def run_step_by_step() -> str:
+    _, scenario = load_scenario()
+    print(f"Cenário: {scenario.name}")
+    print("Entrada: PaginatedClient(provider).fetch_all()")
+    print("O cliente começa a primeira chamada com cursor=None.")
+    print(
+        f"Durante a leitura, o comentário {scenario.new_comment_id} será inserido "
+        f"depois da página {scenario.insert_after_page}."
+    )
+    print()
+
+    provider = TracingProvider(build_feed(scenario, schedule_insert=True))
+    result = PaginatedClient(provider).fetch_all()
+    return f"Resultado final: páginas={result.pages}; itens={result.ids}"
+
+
+def parse_arguments() -> Arguments:
+    parser = argparse.ArgumentParser(description="Executa o experimento de paginação do P07.")
+    parser.add_argument(
+        "--step-by-step",
+        action="store_true",
+        help="mostra cada chamada, o JSON recebido e o cursor da próxima página",
+    )
+    arguments = Arguments()
+    parser.parse_args(namespace=arguments)
+    return arguments
+
+
+def main() -> None:
+    arguments = parse_arguments()
+    output = run_step_by_step() if arguments.step_by_step else run()
+    print(output)
+
+
 if __name__ == "__main__":
-    print(run())
+    main()

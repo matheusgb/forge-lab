@@ -125,11 +125,17 @@ uv run ruff check .
 uv run pyright
 uv run pytest
 uv run python scripts/run_experiment.py
+uv run python scripts/run_experiment.py --step-by-step
 ```
 
-O último comando executa a paginação normal, insere um comentário entre páginas,
-compara offset e cursor e provoca duas quebras de contrato. O resultado fica em
-`evidence/result.txt`.
+O primeiro comando do experimento executa a paginação normal, insere um comentário
+entre páginas, compara offset e cursor e provoca duas quebras de contrato. O resultado
+fica em `evidence/result.txt`.
+
+O modo `--step-by-step` executa somente o percurso por cursor. Ele mostra a chamada
+`provider.get_page(cursor=...)`, o JSON bruto recebido e o valor de `next_cursor` usado
+na chamada seguinte. Quando o JSON traz `next_cursor: null`, a saída explica por que o
+cliente encerra a leitura. Esse modo escreve apenas no terminal e não altera a evidência.
 
 ## Resultado observado
 
