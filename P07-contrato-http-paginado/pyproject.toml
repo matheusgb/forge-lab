@@ -4,7 +4,9 @@ version = "0.1.0"
 description = "Contrato paginado com cursor estavel diante de novas insercoes"
 readme = "README.md"
 requires-python = ">=3.14,<3.15"
-dependencies = []
+dependencies = [
+    "pydantic>=2.13.4",
+]
 
 [dependency-groups]
 dev = [

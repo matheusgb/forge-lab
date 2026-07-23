@@ -44,5 +44,7 @@ def test_renamed_required_field_breaks_the_contract_with_a_clear_error() -> None
         }
     )
 
-    with pytest.raises(ContractError, match=r"items\[0\]\.body: campo obrigatório ausente"):
+    with pytest.raises(
+        ContractError, match=r"response\.items\[0\]\.body: campo obrigatório ausente"
+    ):
         PaginatedClient(provider).fetch_all()

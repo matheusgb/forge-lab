@@ -27,6 +27,9 @@ O cursor é opaco para o cliente. Neste provider, ele representa duas posições
 Essa combinação mantém uma janela estável. Um comentário criado depois do início não
 entra no meio da leitura. Ele aparece quando o cliente inicia uma nova consulta.
 
+Pydantic transforma cada resposta em `Page` e valida o contrato declarativo. O cliente
+fica responsável apenas pelo percurso do cursor e pelas invariantes da paginação.
+
 O cliente também interrompe cursor repetido, item duplicado, página vazia com continuação
 e resposta que não respeita o schema esperado.
 
@@ -65,7 +68,8 @@ leitura, ele funciona como uma fronteira de snapshot, também chamada de high-wa
 Evolução compatível acrescenta informação sem invalidar consumidores existentes. A
 versão 2 do provider adiciona `author_badge`, um campo opcional que o consumidor da
 versão 1 pode ignorar. Renomear o campo obrigatório `body` para `text` é incompatível e
-gera um erro legível.
+gera um erro legível. O modelo declara que campos extras são ignorados, portanto essa
+compatibilidade não depende de um parser manual.
 
 ## Dois problemas parecidos
 
@@ -116,12 +120,14 @@ no comentário 5 e limitado ao snapshot 6, a segunda página retorna 4 e 3. O co
 ## Como executar
 
 ```bash
-make setup
-make check
-make experiment
+uv sync --locked
+uv run ruff check .
+uv run pyright
+uv run pytest
+uv run python scripts/run_experiment.py
 ```
 
-`make experiment` executa a paginação normal, insere um comentário entre páginas,
+O último comando executa a paginação normal, insere um comentário entre páginas,
 compara offset e cursor e provoca duas quebras de contrato. O resultado fica em
 `evidence/result.txt`.
 
