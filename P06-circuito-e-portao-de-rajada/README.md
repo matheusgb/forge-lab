@@ -22,6 +22,10 @@ Após três falhas, o circuito abre por cinco segundos. Depois desse intervalo, 
 chamada de teste verifica a recuperação. O bucket começa com três tokens, gasta um por
 chamada e repõe um por segundo.
 
+O projeto usa `pybreaker` para os estados e as transições do circuito. Assim, o código
+local mostra a política de proteção e a composição dos mecanismos, sem reimplementar
+uma biblioteca de circuit breaker.
+
 ## Conceitos abordados
 
 Circuit breaker, ou disjuntor, evita insistir em uma dependência indisponível. Ele usa
@@ -50,13 +54,15 @@ consultas ao mesmo tempo. O token bucket libera apenas a taxa combinada com o pr
 ## Como executar
 
 ```bash
-make setup
-make check
-make experiment
+uv sync --locked
+uv run ruff check .
+uv run pyright
+uv run pytest
+uv run python scripts/run_experiment.py
 ```
 
-O experimento usa um relógio manual e resultados definidos no `scenario.yaml`. Ele não
-acessa a internet nem usa espera real.
+O experimento usa `time-machine` para avançar o relógio do processo e lê o cenário com
+Pydantic. Ele não acessa a internet nem espera o tempo real passar.
 
 ## Resultado observado
 
@@ -69,15 +75,16 @@ acessa a internet nem usa espera real.
 | cinco chamadas com três tokens | três permitidas e duas recusadas |
 | um segundo de reposição | uma nova chamada permitida |
 
-Dezoito testes, Ruff e Pyright passaram. A busca pelo segredo sintético encontrou zero
+Onze testes, Ruff e Pyright passaram. A busca pelo segredo sintético encontrou zero
 ocorrências nos logs e na evidência. O resultado completo está em
 `evidence/result.txt`.
 
 ## Configuração e segredo
 
-`ProviderConfig.from_env()` lê a credencial de uma variável de ambiente. O campo usa
-`repr=False`, e os logs não recebem seu valor. Esse teste cobre os caminhos de log do
-projeto, mas não substitui armazenamento seguro, controle de acesso ou rotação.
+`ProviderConfig`, baseado em Pydantic Settings, lê `P06_PROVIDER_API_KEY` diretamente do
+ambiente. `SecretStr` oculta o valor nas representações do objeto, e os logs não recebem
+a credencial. Esse teste cobre os caminhos de log do projeto, mas não substitui
+armazenamento seguro, controle de acesso ou rotação.
 
 ## Limite do projeto
 

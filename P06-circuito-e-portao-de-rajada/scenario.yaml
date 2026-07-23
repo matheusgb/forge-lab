@@ -1,10 +1,5 @@
 {
   "name": "circuito-e-portao-locais",
-  "seed": 0,
-  "concurrency": 1,
-  "repetitions": 1,
-  "duration_seconds": 11.0,
-  "secret_env_var": "P06_PROVIDER_API_KEY",
   "circuit": {
     "failure_threshold": 3,
     "recovery_timeout_seconds": 5.0

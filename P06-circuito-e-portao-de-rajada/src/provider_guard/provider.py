@@ -1,5 +1,6 @@
 import logging
 import secrets
+from collections import deque
 from collections.abc import Sequence
 from typing import Protocol
 
@@ -22,7 +23,7 @@ class FakeProvider:
     ) -> None:
         if not outcomes:
             raise ValueError("fake provider needs at least one outcome")
-        self._outcomes = tuple(outcomes)
+        self._outcomes = deque(outcomes)
         self._expected_api_key = expected_api_key
         self._calls = 0
 
@@ -36,11 +37,10 @@ class FakeProvider:
             logger.info("provider_authentication_failed call=%d", self._calls)
             raise ProviderAuthenticationError("provider rejected the configured credential")
 
-        index = self._calls - 1
-        if index >= len(self._outcomes):
+        if not self._outcomes:
             raise AssertionError("fake provider received more calls than planned")
 
-        outcome = self._outcomes[index]
+        outcome = self._outcomes.popleft()
         logger.info("provider_result call=%d outcome=%s", self._calls, outcome.value)
         if outcome is ProviderOutcome.FAILURE:
             raise ProviderUnavailable("controlled provider failure")

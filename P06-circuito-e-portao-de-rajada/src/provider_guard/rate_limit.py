@@ -1,9 +1,16 @@
+from collections.abc import Callable
+from time import monotonic
+
 from provider_guard.model import TokenBucketPolicy
-from provider_guard.timing import Clock
 
 
 class TokenBucket:
-    def __init__(self, *, policy: TokenBucketPolicy, clock: Clock) -> None:
+    def __init__(
+        self,
+        *,
+        policy: TokenBucketPolicy,
+        clock: Callable[[], float] = monotonic,
+    ) -> None:
         self.policy = policy
         self.clock = clock
         self._tokens = float(policy.capacity)

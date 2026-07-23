@@ -1,6 +1,7 @@
 import logging
 
-from provider_guard.circuit import CircuitBreaker
+from pybreaker import CircuitBreaker
+
 from provider_guard.config import ProviderConfig
 from provider_guard.errors import RateLimitExceeded
 from provider_guard.provider import Provider
@@ -24,11 +25,11 @@ class ProtectedProviderClient:
         self.bucket = bucket
 
     def fetch(self) -> str:
-        return self.circuit.execute(self._fetch_with_local_limit)
+        return self.circuit.call(self._fetch_with_local_limit)
 
     def _fetch_with_local_limit(self) -> str:
         if not self.bucket.consume():
             logger.info("rate_limit_rejected endpoint=%s", self.config.endpoint)
             raise RateLimitExceeded("local token bucket is empty")
         logger.info("provider_request endpoint=%s", self.config.endpoint)
-        return self.provider.fetch(self.config.api_key)
+        return self.provider.fetch(self.config.api_key.get_secret_value())

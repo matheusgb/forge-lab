@@ -1,12 +1,6 @@
 import pytest
 
 from provider_guard.model import CircuitPolicy, TokenBucketPolicy
-from provider_guard.timing import ManualClock
-
-
-@pytest.fixture
-def clock() -> ManualClock:
-    return ManualClock()
 
 
 @pytest.fixture
