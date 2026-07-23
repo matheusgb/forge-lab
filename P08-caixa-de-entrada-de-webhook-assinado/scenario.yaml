@@ -1,0 +1,21 @@
+{
+  "name": "webhook-assinado-com-redelivery-e-crash",
+  "repetitions": 3,
+  "now": "2026-07-22T15:00:00Z",
+  "replay_window_seconds": 300,
+  "controlled_secret": "local-demo-secret",
+  "events": {
+    "authorized": {
+      "event_id": "evt-authorized-1",
+      "type": "payment.authorized",
+      "order_id": "order-1",
+      "occurred_at": "2026-07-22T14:59:30Z"
+    },
+    "captured_out_of_order": {
+      "event_id": "evt-captured-early",
+      "type": "payment.captured",
+      "order_id": "order-2",
+      "occurred_at": "2026-07-22T14:59:40Z"
+    }
+  }
+}

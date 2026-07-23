@@ -1,0 +1,8 @@
+Cenário: webhook-assinado-com-redelivery-e-crash
+Três entregas: criadas=[True, False, False]; registros=1
+Crash controlado: crash depois da persistência e antes do efeito
+Depois do crash: status=received; efeitos=0
+Depois da recuperação: status=processed; efeitos=1
+Corpo adulterado: assinatura inválida
+Replay antigo: timestamp fora da janela aceita
+Fora de ordem: status=failed; motivo=payment.captured exige payment.authorized para order-2
