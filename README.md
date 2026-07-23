@@ -272,7 +272,7 @@ comportamento multi-região.
 A coleção termina em P12 e não receberá novos microprojetos. O repositório permanece
 aberto para correções e manutenção do que já foi construído.
 
-## Resumo da ópera
+## Fim
 
 O ForgeLab reúne treze perguntas de backend e transforma cada uma em código pequeno,
 falha controlada e evidência reproduzível. Escolha um problema no catálogo, entre na
