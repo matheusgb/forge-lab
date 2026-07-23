@@ -29,30 +29,18 @@ def create_app(
     fail_shutdown: bool = False,
 ) -> FastAPI:
     journal = EventJournal(event_path)
-
-    def default_client_factory() -> ManagedComponent:
-        return ManagedComponent("client", journal)
-
-    def default_resource_factory() -> ManagedComponent:
-        return ManagedComponent(
-            "resource",
-            journal,
-            fail_on_enter=fail_startup,
-            fail_on_close=fail_shutdown,
+    client_factory = client_factory or (lambda: ManagedComponent("client", journal))
+    resource_factory = resource_factory or (
+        lambda: ManagedComponent(
+            "resource", journal, fail_on_enter=fail_startup, fail_on_close=fail_shutdown
         )
-
-    selected_client_factory = (
-        client_factory if client_factory is not None else default_client_factory
-    )
-    selected_resource_factory = (
-        resource_factory if resource_factory is not None else default_resource_factory
     )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         with ExitStack() as stack:
-            app.state.client = stack.enter_context(selected_client_factory())
-            app.state.resource = stack.enter_context(selected_resource_factory())
+            app.state.client = stack.enter_context(client_factory().open())
+            app.state.resource = stack.enter_context(resource_factory().open())
             app.state.journal = journal
             journal.append("application_started")
             try:

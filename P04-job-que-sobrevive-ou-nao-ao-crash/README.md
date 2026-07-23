@@ -45,15 +45,17 @@ outras operações do event loop.
 ## Como executar
 
 ```bash
-make setup
-make check
-make experiment
+uv sync --locked
+uv run ruff check .
+uv run pyright
+uv run pytest
+uv run python scripts/run_experiment.py
 ```
 
 Para iniciar a API manualmente:
 
 ```bash
-make run
+uv run uvicorn lifecycle_api.main:app --reload
 ```
 
 A documentação fica em `http://127.0.0.1:8000/docs`.

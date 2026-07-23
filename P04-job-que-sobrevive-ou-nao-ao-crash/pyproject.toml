@@ -9,9 +9,6 @@ dependencies = [
     "uvicorn>=0.35.0",
 ]
 
-[project.scripts]
-lifecycle-api = "lifecycle_api.cli:main"
-
 [dependency-groups]
 dev = [
     "httpx2>=2.7.0",

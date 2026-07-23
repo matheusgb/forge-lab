@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import cast
 
-from httpx2 import Client
+from fastapi.testclient import TestClient
 
 from lifecycle_api.app import CORRELATION_HEADER
 
@@ -11,7 +11,7 @@ def read_events(path: Path) -> list[dict[str, object]]:
     return [cast(dict[str, object], json.loads(line)) for line in path.read_text().splitlines()]
 
 
-def test_middleware_propagates_received_correlation_id(client: Client) -> None:
+def test_middleware_propagates_received_correlation_id(client: TestClient) -> None:
     response = client.get("/health", headers={CORRELATION_HEADER: "correlation-test"})
 
     assert response.status_code == 200
@@ -19,7 +19,7 @@ def test_middleware_propagates_received_correlation_id(client: Client) -> None:
     assert response.json()["correlation_id"] == "correlation-test"
 
 
-def test_middleware_generates_missing_correlation_id(client: Client) -> None:
+def test_middleware_generates_missing_correlation_id(client: TestClient) -> None:
     response = client.get("/health")
 
     assert response.status_code == 200
@@ -28,7 +28,7 @@ def test_middleware_generates_missing_correlation_id(client: Client) -> None:
 
 
 def test_background_task_finishes_during_normal_execution(
-    client: Client,
+    client: TestClient,
     event_path: Path,
 ) -> None:
     response = client.post("/jobs", json={"duration_seconds": 0.001})

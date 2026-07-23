@@ -1,6 +1,6 @@
-{"event": "client_started", "pid": 168336, "timestamp": "2026-07-21T19:37:32.839755+00:00"}
-{"event": "resource_started", "pid": 168336, "timestamp": "2026-07-21T19:37:32.843595+00:00"}
-{"event": "application_started", "pid": 168336, "timestamp": "2026-07-21T19:37:32.845470+00:00"}
-{"event": "application_stopping", "pid": 168336, "timestamp": "2026-07-21T19:37:33.874060+00:00"}
-{"close_calls": 1, "event": "resource_closed", "pid": 168336, "timestamp": "2026-07-21T19:37:33.879331+00:00"}
-{"close_calls": 1, "event": "client_closed", "pid": 168336, "timestamp": "2026-07-21T19:37:33.882921+00:00"}
+{"event": "client_started", "pid": 32020, "timestamp": "2026-07-23T01:01:56.884036+00:00"}
+{"event": "resource_started", "pid": 32020, "timestamp": "2026-07-23T01:01:56.886861+00:00"}
+{"event": "application_started", "pid": 32020, "timestamp": "2026-07-23T01:01:56.888788+00:00"}
+{"event": "application_stopping", "pid": 32020, "timestamp": "2026-07-23T01:01:57.870507+00:00"}
+{"close_calls": 1, "event": "resource_closed", "pid": 32020, "timestamp": "2026-07-23T01:01:57.875072+00:00"}
+{"close_calls": 1, "event": "client_closed", "pid": 32020, "timestamp": "2026-07-23T01:01:57.878106+00:00"}
