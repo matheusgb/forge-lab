@@ -1,11 +1,13 @@
 ![Banner do ForgeLab](assets/forge-lab-banner.png)
 
-# ForgeLab
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white" alt="Python 3.14">
+  <img src="https://img.shields.io/badge/projetos-13-6f42c1" alt="13 projetos">
+  <img src="https://img.shields.io/badge/status-conclu%C3%ADdo-2ea44f" alt="Status concluído">
+  <img src="https://img.shields.io/badge/depend%C3%AAncias-uv-DE5FE9?logo=uv" alt="Dependências gerenciadas com uv">
+</p>
 
-![Python 3.14](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)
-![Projetos](https://img.shields.io/badge/projetos-13-6f42c1)
-![Status](https://img.shields.io/badge/status-conclu%C3%ADdo-2ea44f)
-![uv](https://img.shields.io/badge/depend%C3%AAncias-uv-DE5FE9?logo=uv)
+---
 
 **Treze microprojetos independentes para observar fundamentos de backend funcionando,
 falhando e se recuperando.**
