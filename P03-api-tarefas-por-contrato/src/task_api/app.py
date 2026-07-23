@@ -1,9 +1,8 @@
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
-from task_api.contracts import TaskRepository
 from task_api.domain import RepositoryUnavailableError, TaskAlreadyCompletedError, TaskError
-from task_api.repository import InMemoryTaskRepository
+from task_api.repository import InMemoryTaskRepository, TaskRepository
 from task_api.routes import router
 
 

@@ -52,15 +52,17 @@ sem precisar derrubar um banco real e sem modificar o service.
 ## Como executar
 
 ```bash
-make setup
-make check
-make demo
+uv sync --locked
+uv run ruff check .
+uv run pyright
+uv run pytest
+uv run python scripts/demo.py
 ```
 
 Para iniciar a API:
 
 ```bash
-make run
+uv run uvicorn task_api.main:app --reload
 ```
 
 A documentação interativa fica em `http://127.0.0.1:8000/docs`. Todas as rotas exigem
@@ -85,7 +87,8 @@ repositório indisponível  -> 503 Service Unavailable
 identidade ausente        -> 401 Unauthorized
 ```
 
-`make experiment` executa esses casos. `make openapi` atualiza o contrato salvo em
+`uv run pytest tests/test_api.py -v` executa esses casos. O comando
+`uv run python scripts/export_openapi.py` atualiza o contrato salvo em
 `evidence/openapi.json`.
 
 ## Resultado observado

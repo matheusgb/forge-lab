@@ -9,9 +9,6 @@ dependencies = [
     "uvicorn>=0.35.0",
 ]
 
-[project.scripts]
-task-api = "task_api.cli:main"
-
 [dependency-groups]
 dev = [
     "httpx2>=2.7.0",

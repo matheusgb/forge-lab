@@ -10,7 +10,7 @@ class TaskStatus(StrEnum):
 
 @dataclass(frozen=True)
 class Task:
-    task_id: str
+    id: str
     title: str
     description: str | None
     status: TaskStatus
@@ -21,7 +21,7 @@ class Task:
 
     def complete(self, completed_at: datetime) -> Task:
         if self.status is TaskStatus.COMPLETED:
-            raise TaskAlreadyCompletedError(self.task_id)
+            raise TaskAlreadyCompletedError(self.id)
         return replace(
             self,
             status=TaskStatus.COMPLETED,

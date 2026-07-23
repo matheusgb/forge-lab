@@ -1,8 +1,8 @@
 from datetime import datetime
 from uuid import uuid4
 
-from task_api.contracts import TaskRepository
 from task_api.domain import Task, TaskNotFoundError, TaskStatus
+from task_api.repository import TaskRepository
 
 
 class TaskService:
@@ -19,7 +19,7 @@ class TaskService:
         now: datetime,
     ) -> Task:
         task = Task(
-            task_id=str(uuid4()),
+            id=str(uuid4()),
             title=title,
             description=description,
             status=TaskStatus.PENDING,

@@ -1,15 +1,11 @@
-from typing import cast
-
 from fastapi.testclient import TestClient
-from httpx2 import Client
 
 from task_api.app import create_app
 
 
 def main() -> None:
     headers = {"X-User-ID": "demo-user", "X-Request-ID": "demo-request"}
-    with TestClient(create_app()) as test_client:
-        client = cast(Client, test_client)
+    with TestClient(create_app()) as client:
         created = client.post(
             "/tasks",
             headers=headers,

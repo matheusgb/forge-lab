@@ -1,10 +1,8 @@
 from collections.abc import Generator
-from typing import cast
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from httpx2 import Client
 
 from task_api.app import create_app
 
@@ -15,6 +13,6 @@ def app() -> FastAPI:
 
 
 @pytest.fixture
-def client(app: FastAPI) -> Generator[Client]:
+def client(app: FastAPI) -> Generator[TestClient]:
     with TestClient(app) as test_client:
-        yield cast(Client, test_client)
+        yield test_client

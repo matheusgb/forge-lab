@@ -1,24 +1,19 @@
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 
-from task_api.domain import Task, TaskStatus
+from task_api.domain import TaskStatus
 
 
 class TaskCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    title: Annotated[str, Field(min_length=1, max_length=120)]
+    title: Annotated[
+        str,
+        StringConstraints(strip_whitespace=True, min_length=1, max_length=120),
+    ]
     description: Annotated[str | None, Field(max_length=500)] = None
-
-    @field_validator("title")
-    @classmethod
-    def normalize_title(cls, value: str) -> str:
-        normalized = value.strip()
-        if not normalized:
-            raise ValueError("title must not be blank")
-        return normalized
 
     @field_validator("description")
     @classmethod
@@ -30,6 +25,8 @@ class TaskCreate(BaseModel):
 
 
 class TaskResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     title: str
     description: str | None
@@ -38,19 +35,6 @@ class TaskResponse(BaseModel):
     created_at: datetime
     completed_at: datetime | None
     request_id: str
-
-    @classmethod
-    def from_task(cls, task: Task) -> TaskResponse:
-        return cls(
-            id=task.task_id,
-            title=task.title,
-            description=task.description,
-            status=task.status,
-            created_by=task.created_by,
-            created_at=task.created_at,
-            completed_at=task.completed_at,
-            request_id=task.request_id,
-        )
 
 
 class ErrorDetail(BaseModel):
