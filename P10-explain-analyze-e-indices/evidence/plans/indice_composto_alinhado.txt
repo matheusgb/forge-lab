@@ -1,0 +1,10 @@
+EXPLAIN (ANALYZE, BUFFERS)
+Planning Time: 0.127 ms
+Execution Time: 0.045 ms
+Plan:
+Limit (actual rows=50 loops=1 time=0.034 ms; estimated rows=50 width=24)
+  Buffers: shared hit=4 read=3; temp read=0 written=0
+  Index Only Scan on orders using idx_orders_tenant_status_created (actual rows=50 loops=1 time=0.031 ms; estimated rows=122 width=24)
+    Index Cond: ((tenant_id = '7'::smallint) AND (status = 'pending'::text))
+    Heap Fetches: 0
+    Buffers: shared hit=4 read=3; temp read=0 written=0

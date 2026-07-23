@@ -1,0 +1,19 @@
+P10: clínica do plano de consulta
+PostgreSQL: PostgreSQL 17.5 on x86_64-pc-linux-musl, compiled by gcc (Alpine 14.2.0) 14.2.0, 64-bit
+Linhas em orders: 120000
+
+Planos medidos com EXPLAIN (ANALYZE, BUFFERS):
+- Sem índice: Seq Scan; execução=4.880 ms; buffers hit=6667, read=0
+- Índice apenas em status: Index Scan; execução=0.328 ms; buffers hit=240, read=4
+- Sequential scan legítimo: Seq Scan; execução=10.585 ms; buffers hit=6667, read=0
+- Índice composto alinhado: Index Only Scan; execução=0.045 ms; buffers hit=4, read=3
+
+Acesso da aplicação:
+- Linhas lógicas: 20
+- N+1: 21 consultas
+- JOIN: 1 consulta
+- Mesmo resultado lógico: true
+- Projeção mínima: 1179 bytes na serialização JSON local
+- SELECT amplo: 10139 bytes na serialização JSON local
+
+Os tempos e buffers pertencem somente a esta execução local.

@@ -1,0 +1,13 @@
+EXPLAIN (ANALYZE, BUFFERS)
+Planning Time: 0.138 ms
+Execution Time: 4.880 ms
+Plan:
+Limit (actual rows=50 loops=1 time=4.861 ms; estimated rows=50 width=24)
+  Buffers: shared hit=6667 read=0; temp read=0 written=0
+  Sort (actual rows=50 loops=1 time=4.857 ms; estimated rows=123 width=24)
+    Sort Key: created_at DESC
+    Buffers: shared hit=6667 read=0; temp read=0 written=0
+    Seq Scan on orders (actual rows=120 loops=1 time=4.829 ms; estimated rows=123 width=24)
+      Filter: ((tenant_id = '7'::smallint) AND (status = 'pending'::text))
+      Rows Removed by Filter: 119880
+      Buffers: shared hit=6667 read=0; temp read=0 written=0

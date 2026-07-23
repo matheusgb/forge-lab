@@ -1,0 +1,14 @@
+EXPLAIN (ANALYZE, BUFFERS)
+Planning Time: 0.153 ms
+Execution Time: 0.328 ms
+Plan:
+Limit (actual rows=50 loops=1 time=0.312 ms; estimated rows=50 width=24)
+  Buffers: shared hit=240 read=4; temp read=0 written=0
+  Sort (actual rows=50 loops=1 time=0.310 ms; estimated rows=120 width=24)
+    Sort Key: created_at DESC
+    Buffers: shared hit=240 read=4; temp read=0 written=0
+    Index Scan on orders using idx_orders_status (actual rows=120 loops=1 time=0.290 ms; estimated rows=120 width=24)
+      Index Cond: (status = 'pending'::text)
+      Filter: (tenant_id = '7'::smallint)
+      Rows Removed by Filter: 2280
+      Buffers: shared hit=240 read=4; temp read=0 written=0

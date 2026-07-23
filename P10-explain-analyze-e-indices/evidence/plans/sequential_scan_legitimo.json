@@ -1,0 +1,53 @@
+{
+  "Plan": {
+    "Node Type": "Aggregate",
+    "Relation Name": null,
+    "Index Name": null,
+    "Index Cond": null,
+    "Filter": null,
+    "Sort Key": [],
+    "Actual Rows": 1.0,
+    "Actual Loops": 1.0,
+    "Actual Total Time": 10.576,
+    "Plan Rows": 1.0,
+    "Plan Width": 8,
+    "Rows Removed by Filter": 0,
+    "Heap Fetches": null,
+    "Shared Hit Blocks": 6667,
+    "Shared Read Blocks": 0,
+    "Temp Read Blocks": 0,
+    "Temp Written Blocks": 0,
+    "Plans": [
+      {
+        "Node Type": "Seq Scan",
+        "Parent Relationship": "Outer",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Relation Name": "orders",
+        "Alias": "orders",
+        "Startup Cost": 0.0,
+        "Total Cost": 8167.0,
+        "Plan Rows": 117544,
+        "Plan Width": 4,
+        "Actual Startup Time": 0.006,
+        "Actual Total Time": 7.048,
+        "Actual Rows": 117600,
+        "Actual Loops": 1,
+        "Filter": "(status = 'completed'::text)",
+        "Rows Removed by Filter": 2400,
+        "Shared Hit Blocks": 6667,
+        "Shared Read Blocks": 0,
+        "Shared Dirtied Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Dirtied Blocks": 0,
+        "Local Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0
+      }
+    ]
+  },
+  "Planning Time": 0.032,
+  "Execution Time": 10.585
+}

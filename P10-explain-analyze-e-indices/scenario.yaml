@@ -1,0 +1,13 @@
+database_url: postgresql://clinic:clinic@127.0.0.1:55440/query_clinic
+
+seed:
+  row_count: 120000
+  customer_count: 400
+  tenant_count: 20
+  pending_every: 50
+
+target:
+  tenant_id: 7
+  status: pending
+  page_size: 50
+  n_plus_one_rows: 20

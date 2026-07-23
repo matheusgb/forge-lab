@@ -1,0 +1,10 @@
+EXPLAIN (ANALYZE, BUFFERS)
+Planning Time: 0.032 ms
+Execution Time: 10.585 ms
+Plan:
+Aggregate (actual rows=1 loops=1 time=10.576 ms; estimated rows=1 width=8)
+  Buffers: shared hit=6667 read=0; temp read=0 written=0
+  Seq Scan on orders (actual rows=117600 loops=1 time=7.048 ms; estimated rows=117544 width=4)
+    Filter: (status = 'completed'::text)
+    Rows Removed by Filter: 2400
+    Buffers: shared hit=6667 read=0; temp read=0 written=0
