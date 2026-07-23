@@ -1,0 +1,6 @@
+tenant_a_id: "00000000-0000-0000-0000-000000000001"
+tenant_b_id: "00000000-0000-0000-0000-000000000002"
+orphan_tenant_id: "00000000-0000-0000-0000-000000000099"
+external_id: "checkout-42"
+valid_total_cents: 1590
+valid_status: "pending"

@@ -1,0 +1,16 @@
+name: p09-schema-guard
+
+services:
+  postgres:
+    image: postgres:17.6-alpine3.22
+    environment:
+      POSTGRES_DB: schema_guard
+      POSTGRES_USER: forge
+      POSTGRES_PASSWORD: forge
+    ports:
+      - "55439:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U forge -d schema_guard"]
+      interval: 1s
+      timeout: 3s
+      retries: 20

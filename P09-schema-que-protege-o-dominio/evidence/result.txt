@@ -1,0 +1,12 @@
+Ambiente: PostgreSQL 17.6 em container local, porta 55439
+Comando: uv run python scripts/run_experiment.py
+
+Constraints observadas pelo PostgreSQL:
+  FK órfã: rejeitada com ForeignKeyViolation
+  NOT NULL: rejeitada com NotNullViolation
+  CHECK: rejeitada com CheckViolation
+  UNIQUE dentro do tenant: rejeitada com UniqueViolation
+  UNIQUE por tenant: o mesmo external_id existe em 2 tenants
+Ciclo da migration:
+  downgrade base removeu as tabelas: True
+  segundo upgrade head recriou as tabelas: True
