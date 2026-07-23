@@ -1,10 +1,10 @@
 import platform
 import statistics
-from collections.abc import Awaitable, Callable
 from dataclasses import asdict, dataclass
+from functools import partial
 
 from concurrency_race.config import Scenario
-from concurrency_race.measurement import Measurement, measure
+from concurrency_race.measurement import Workload, measure
 from concurrency_race.strategies import (
     cpu_direct,
     cpu_processes,
@@ -13,6 +13,13 @@ from concurrency_race.strategies import (
     io_concurrent,
     io_sequential,
 )
+
+
+@dataclass(frozen=True)
+class Strategy:
+    category: str
+    name: str
+    workload: Workload
 
 
 @dataclass(frozen=True)
@@ -37,28 +44,22 @@ class ExperimentReport:
         return asdict(self)
 
 
-WorkloadFactory = Callable[[], Awaitable[tuple[int, ...]]]
-
-
 async def _repeat(
-    category: str,
-    strategy: str,
-    workload: WorkloadFactory,
+    strategy: Strategy,
     repetitions: int,
     heartbeat_interval_seconds: float,
 ) -> StrategyReport:
-    measurements: list[Measurement] = []
-    for _ in range(repetitions):
-        measurements.append(await measure(workload, heartbeat_interval_seconds))
-
+    measurements = [
+        await measure(strategy.workload, heartbeat_interval_seconds) for _ in range(repetitions)
+    ]
     expected = measurements[0].result
     if any(item.result != expected for item in measurements):
-        raise AssertionError(f"{strategy} returned inconsistent results")
+        raise AssertionError(f"{strategy.name} returned inconsistent results")
 
     wall_seconds = tuple(item.wall_seconds for item in measurements)
     return StrategyReport(
-        category=category,
-        strategy=strategy,
+        category=strategy.category,
+        strategy=strategy.name,
         wall_seconds=wall_seconds,
         median_wall_seconds=statistics.median(wall_seconds),
         max_heartbeat_delay_seconds=max(item.max_heartbeat_delay_seconds for item in measurements),
@@ -74,53 +75,40 @@ def _assert_same_results(reports: tuple[StrategyReport, ...], category: str) -> 
 
 async def run_experiment(scenario: Scenario) -> ExperimentReport:
     io_inputs = tuple(range(scenario.io.operations))
-    cpu_inputs = scenario.cpu.inputs
-    repetitions = scenario.repetitions
-    heartbeat = scenario.heartbeat_interval_seconds
-
-    reports = (
-        await _repeat(
+    cpu_inputs = tuple(scenario.cpu.inputs)
+    strategies = (
+        Strategy(
             "I/O",
             "espera sequencial",
-            lambda: io_sequential(io_inputs, scenario.io.delay_seconds),
-            repetitions,
-            heartbeat,
+            partial(io_sequential, io_inputs, scenario.io.delay_seconds),
         ),
-        await _repeat(
+        Strategy(
             "I/O",
             "asyncio.gather",
-            lambda: io_concurrent(io_inputs, scenario.io.delay_seconds),
-            repetitions,
-            heartbeat,
+            partial(io_concurrent, io_inputs, scenario.io.delay_seconds),
         ),
-        await _repeat(
+        Strategy(
             "I/O",
             "time.sleep bloqueante",
-            lambda: io_blocking_loop(io_inputs, scenario.io.delay_seconds),
-            repetitions,
-            heartbeat,
+            partial(io_blocking_loop, io_inputs, scenario.io.delay_seconds),
         ),
-        await _repeat(
-            "CPU",
-            "execução direta",
-            lambda: cpu_direct(cpu_inputs),
-            repetitions,
-            heartbeat,
-        ),
-        await _repeat(
-            "CPU",
-            "asyncio.to_thread",
-            lambda: cpu_threads(cpu_inputs),
-            repetitions,
-            heartbeat,
-        ),
-        await _repeat(
+        Strategy("CPU", "execução direta", partial(cpu_direct, cpu_inputs)),
+        Strategy("CPU", "asyncio.to_thread", partial(cpu_threads, cpu_inputs)),
+        Strategy(
             "CPU",
             "processos",
-            lambda: cpu_processes(cpu_inputs, scenario.cpu.process_workers),
-            repetitions,
-            heartbeat,
+            partial(cpu_processes, cpu_inputs, scenario.cpu.process_workers),
         ),
+    )
+    reports = tuple(
+        [
+            await _repeat(
+                strategy,
+                scenario.repetitions,
+                scenario.heartbeat_interval_seconds,
+            )
+            for strategy in strategies
+        ]
     )
     _assert_same_results(reports, "I/O")
     _assert_same_results(reports, "CPU")
@@ -128,6 +116,6 @@ async def run_experiment(scenario: Scenario) -> ExperimentReport:
         scenario=scenario.name,
         python=platform.python_version(),
         platform=platform.platform(),
-        repetitions=repetitions,
+        repetitions=scenario.repetitions,
         reports=reports,
     )

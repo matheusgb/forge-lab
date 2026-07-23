@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+from tabulate import tabulate
+
 from concurrency_race.runner import ExperimentReport
 
 
@@ -11,22 +13,26 @@ def _format_seconds(value: float) -> str:
 
 
 def render_table(report: ExperimentReport) -> str:
-    rows = [
-        "categoria | estratégia            | tempo mediano | maior atraso | velocidade",
-        "----------|-----------------------|---------------|--------------|-----------",
-    ]
+    rows: list[tuple[str, str, str, str, str]] = []
     baselines: dict[str, float] = {}
     for item in report.reports:
         baseline = baselines.setdefault(item.category, item.median_wall_seconds)
-        relative_speed = baseline / item.median_wall_seconds
-        relative_speed_text = f"{relative_speed:.2f}x".replace(".", ",")
+        relative_speed = f"{baseline / item.median_wall_seconds:.2f}x".replace(".", ",")
         rows.append(
-            f"{item.category:<9} | {item.strategy:<21} | "
-            f"{_format_seconds(item.median_wall_seconds):>13} | "
-            f"{_format_seconds(item.max_heartbeat_delay_seconds):>12} | "
-            f"{relative_speed_text:>9}"
+            (
+                item.category,
+                item.strategy,
+                _format_seconds(item.median_wall_seconds),
+                _format_seconds(item.max_heartbeat_delay_seconds),
+                relative_speed,
+            )
         )
-    return "\n".join(rows)
+
+    return tabulate(
+        rows,
+        headers=("categoria", "estratégia", "tempo mediano", "maior atraso", "velocidade"),
+        tablefmt="github",
+    )
 
 
 def write_report(report: ExperimentReport, path: Path) -> None:

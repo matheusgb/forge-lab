@@ -21,6 +21,10 @@ mostrar quando o event loop deixa de responder.
 Todas as estratégias de um mesmo grupo recebem as mesmas entradas e precisam produzir
 os mesmos resultados.
 
+O Pydantic lê os parâmetros do YAML e o tabulate monta a tabela final. Essas
+abstrações ficam nas bordas do experimento. O arquivo de estratégias mantém visíveis
+as chamadas que demonstram espera concorrente, bloqueio, threads e processos.
+
 ## Conceito abordado
 
 Concorrência permite avançar mais de uma operação no mesmo intervalo. Ela ajuda quando
@@ -44,13 +48,15 @@ um processo ou para um worker separado.
 ## Como executar
 
 ```bash
-make setup
-make check
-make demo
+uv sync --locked
+uv run ruff check .
+uv run pyright
+uv run pytest
+uv run run-race --scenario scenario.yaml --output output/results.json
 ```
 
-`make demo` executa cada estratégia cinco vezes, calcula a mediana e grava os dados em
-`output/results.json`.
+O último comando executa cada estratégia cinco vezes, calcula a mediana e grava os
+dados em `output/results.json`.
 
 ## Resultado observado
 
@@ -58,12 +64,12 @@ No ambiente descrito em `evidence/results.md`, a execução produziu:
 
 | Situação | Estratégia | Tempo mediano | Maior atraso do heartbeat |
 | --- | --- | ---: | ---: |
-| I/O | sequencial | 2,51 s | menos de 0,01 s |
+| I/O | sequencial | 2,51 s | 0,01 s |
 | I/O | `asyncio.gather` | 0,25 s | menos de 0,01 s |
-| I/O | chamada bloqueante | 2,58 s | 2,57 s |
-| CPU | direta | 2,20 s | 2,20 s |
-| CPU | `asyncio.to_thread` | 2,15 s | 0,14 s |
-| CPU | processos | 0,71 s | 0,06 s |
+| I/O | chamada bloqueante | 2,50 s | 2,49 s |
+| CPU | direta | 2,26 s | 2,41 s |
+| CPU | `asyncio.to_thread` | 2,34 s | 0,10 s |
+| CPU | processos | 0,79 s | 0,13 s |
 
 O `gather` reduziu o tempo das esperas concorrentes. As threads melhoraram a resposta
 do event loop, mas não aceleraram o cálculo. Os processos foram mais rápidos neste

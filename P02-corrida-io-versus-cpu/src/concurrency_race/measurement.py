@@ -31,16 +31,18 @@ async def measure(workload: Workload, heartbeat_interval_seconds: float) -> Meas
     stop = asyncio.Event()
     heartbeat_delays: list[float] = []
     heartbeat_task = asyncio.create_task(
-        _heartbeat(stop, heartbeat_interval_seconds, heartbeat_delays)
+        _heartbeat(stop, heartbeat_interval_seconds, heartbeat_delays),
+        name="event-loop-heartbeat",
     )
     await asyncio.sleep(0)
 
-    started_at = perf_counter()
-    result = await workload()
-    wall_seconds = perf_counter() - started_at
-
-    stop.set()
-    await heartbeat_task
+    try:
+        started_at = perf_counter()
+        result = await workload()
+        wall_seconds = perf_counter() - started_at
+    finally:
+        stop.set()
+        await heartbeat_task
     return Measurement(
         wall_seconds=wall_seconds,
         max_heartbeat_delay_seconds=max(heartbeat_delays, default=0.0),
