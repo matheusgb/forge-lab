@@ -5,11 +5,10 @@ import pytest
 from retry_client.client import RetryingProviderClient
 from retry_client.model import Decision, Operation
 from retry_client.provider import FakeProvider, Outcome
-from retry_client.timing import RecordingWait
 
 ClientBuilder = Callable[
     [tuple[Outcome, ...]],
-    tuple[RetryingProviderClient, FakeProvider, RecordingWait],
+    tuple[RetryingProviderClient, FakeProvider, list[float]],
 ]
 
 
@@ -45,10 +44,10 @@ def test_safe_transient_failure_stops_after_budget(
     client_builder: ClientBuilder,
     outcome: Outcome,
 ) -> None:
-    client, provider, wait = client_builder((outcome, outcome, outcome))
+    client, provider, waits = client_builder((outcome, outcome, outcome))
 
     report = client.call(Operation.SAFE_READ)
 
     assert provider.attempts == 3
-    assert len(wait.calls) == 2
+    assert len(waits) == 2
     assert report.final_decision is Decision.STOP_EXHAUSTED

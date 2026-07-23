@@ -1,5 +1,8 @@
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import Annotated, Self
+
+from pydantic import BaseModel, ConfigDict, Field, PositiveInt, model_validator
 
 
 class Operation(StrEnum):
@@ -25,38 +28,23 @@ class Decision(StrEnum):
     STOP_EXHAUSTED = "stop_exhausted"
 
 
-@dataclass(frozen=True)
-class RetryPolicy:
-    max_attempts: int = 3
-    base_delay_seconds: float = 0.5
-    max_delay_seconds: float = 5.0
-    jitter_ratio: float = 0.2
+class RetryPolicy(BaseModel):
+    model_config = ConfigDict(frozen=True)
 
-    def __post_init__(self) -> None:
-        if self.max_attempts < 1:
-            raise ValueError("max_attempts must be at least one")
-        if self.base_delay_seconds < 0:
-            raise ValueError("base_delay_seconds must not be negative")
+    max_attempts: PositiveInt = 3
+    base_delay_seconds: Annotated[float, Field(ge=0)] = 0.5
+    max_delay_seconds: Annotated[float, Field(ge=0)] = 5.0
+    jitter_ratio: Annotated[float, Field(ge=0, le=1)] = 0.2
+
+    @model_validator(mode="after")
+    def delay_order(self) -> Self:
         if self.max_delay_seconds < self.base_delay_seconds:
             raise ValueError("max_delay_seconds must not be smaller than base delay")
-        if not 0 <= self.jitter_ratio <= 1:
-            raise ValueError("jitter_ratio must be between zero and one")
+        return self
 
 
 @dataclass(frozen=True)
-class AttemptRecord:
-    number: int
-    outcome: str
-    decision: Decision
-    wait_seconds: float | None = None
-
-
-@dataclass(frozen=True)
-class CallReport:
+class CallResult:
     operation: Operation
-    attempts: tuple[AttemptRecord, ...]
+    final_decision: Decision
     final_status: int | None
-
-    @property
-    def final_decision(self) -> Decision:
-        return self.attempts[-1].decision

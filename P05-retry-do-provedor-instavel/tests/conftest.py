@@ -2,15 +2,15 @@ from collections.abc import Callable, Iterator
 from datetime import UTC, datetime
 
 import pytest
+from httpx2 import Client, Timeout
 
-from retry_client.client import RetryingProviderClient, TimeoutSettings
+from retry_client.client import RetryingProviderClient
 from retry_client.model import RetryPolicy
 from retry_client.provider import FakeProvider, Outcome
-from retry_client.timing import FixedClock, FixedRandom, RecordingWait
 
 ClientBuilder = Callable[
     [tuple[Outcome, ...]],
-    tuple[RetryingProviderClient, FakeProvider, RecordingWait],
+    tuple[RetryingProviderClient, FakeProvider, list[float]],
 ]
 
 
@@ -25,42 +25,46 @@ def policy() -> RetryPolicy:
 
 
 @pytest.fixture
-def fixed_clock() -> FixedClock:
-    return FixedClock(datetime(2026, 7, 21, 12, tzinfo=UTC))
+def fixed_clock() -> datetime:
+    return datetime(2026, 7, 21, 12, tzinfo=UTC)
 
 
 def build_client(
     outcomes: tuple[Outcome, ...],
     policy: RetryPolicy,
-    fixed_clock: FixedClock,
-) -> tuple[RetryingProviderClient, FakeProvider, RecordingWait]:
+    fixed_clock: datetime,
+) -> tuple[RetryingProviderClient, FakeProvider, list[float]]:
     provider = FakeProvider(outcomes)
-    wait = RecordingWait()
-    client = RetryingProviderClient(
+    waits: list[float] = []
+    http = Client(
+        base_url="https://provider.test",
         transport=provider.transport(),
-        policy=policy,
-        timeout=TimeoutSettings(),
-        clock=fixed_clock,
-        wait=wait,
-        random_value=FixedRandom(0.5),
+        timeout=Timeout(connect=0.2, read=0.5, write=0.5, pool=0.2),
     )
-    return client, provider, wait
+    client = RetryingProviderClient(
+        http=http,
+        policy=policy,
+        clock=lambda: fixed_clock,
+        wait=waits.append,
+        random_value=lambda: 0.5,
+    )
+    return client, provider, waits
 
 
 @pytest.fixture
 def client_builder(
     policy: RetryPolicy,
-    fixed_clock: FixedClock,
+    fixed_clock: datetime,
 ) -> Iterator[ClientBuilder]:
-    clients: list[RetryingProviderClient] = []
+    clients: list[Client] = []
 
     def build(
         outcomes: tuple[Outcome, ...],
-    ) -> tuple[RetryingProviderClient, FakeProvider, RecordingWait]:
-        client, provider, wait = build_client(outcomes, policy, fixed_clock)
-        clients.append(client)
-        return client, provider, wait
+    ) -> tuple[RetryingProviderClient, FakeProvider, list[float]]:
+        client, provider, waits = build_client(outcomes, policy, fixed_clock)
+        clients.append(client.http)
+        return client, provider, waits
 
     yield build
-    for client in clients:
-        client.http.close()
+    for http in clients:
+        http.close()

@@ -1,13 +1,13 @@
-from dataclasses import dataclass
-
 from httpx2 import MockTransport, ReadTimeout, Request, Response
+from pydantic import BaseModel, ConfigDict, Field
 
 
-@dataclass(frozen=True)
-class Outcome:
-    status_code: int | None = None
-    headers: tuple[tuple[str, str], ...] = ()
-    times_out: bool = False
+class Outcome(BaseModel):
+    model_config = ConfigDict(frozen=True, populate_by_name=True)
+
+    status_code: int | None = Field(default=None, validation_alias="status")
+    retry_after: str | None = None
+    times_out: bool = Field(default=False, validation_alias="timeout")
 
     @classmethod
     def response(
@@ -16,12 +16,15 @@ class Outcome:
         *,
         retry_after: str | None = None,
     ) -> Outcome:
-        headers = () if retry_after is None else (("Retry-After", retry_after),)
-        return cls(status_code=status_code, headers=headers)
+        return cls(status_code=status_code, retry_after=retry_after)
 
     @classmethod
     def timeout(cls) -> Outcome:
         return cls(times_out=True)
+
+    @property
+    def label(self) -> str:
+        return "timeout" if self.times_out else f"http_{self.status_code}"
 
 
 class FakeProvider:
@@ -48,7 +51,9 @@ class FakeProvider:
             raise AssertionError("response outcome has no status code")
         return Response(
             outcome.status_code,
-            headers=dict(outcome.headers),
+            headers=(
+                {"Retry-After": outcome.retry_after} if outcome.retry_after is not None else None
+            ),
             json={"attempt": self.attempts},
             request=request,
         )

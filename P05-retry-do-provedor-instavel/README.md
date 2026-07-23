@@ -24,6 +24,10 @@ O cliente aumenta o intervalo entre tentativas, adiciona uma pequena variação 
 respeita o cabeçalho `Retry-After`. Relógio, espera e aleatoriedade são injetados, então
 os testes não usam `sleep` real.
 
+Tenacity controla o ciclo e o limite de tentativas. O código do projeto mantém visível
+o que pertence à regra da integração: quais erros são temporários, quais operações são
+seguras e quanto tempo o cliente deve esperar.
+
 ## Conceito abordado
 
 Retry é a repetição controlada de uma operação após uma falha. Backoff exponencial
@@ -49,9 +53,11 @@ provedor.
 ## Como executar
 
 ```bash
-make setup
-make check
-make experiment
+uv sync --locked
+uv run ruff check .
+uv run pyright
+uv run pytest
+uv run python scripts/run_experiment.py
 ```
 
 O experimento imprime as tentativas e salva o resultado em `evidence/result.txt`. A
