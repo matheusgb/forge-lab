@@ -18,8 +18,7 @@ testes protegem a regra e a evidência registra o que realmente aconteceu.
 [Catálogo](#catálogo-dos-projetos) ·
 [Rotas de estudo](#rotas-de-estudo) ·
 [Resultados medidos](#resultados-medidos) ·
-[Como executar](#como-executar) ·
-[Perguntas frequentes](#perguntas-frequentes)
+[Como executar](#como-executar)
 
 > [!NOTE]
 > A coleção está concluída em P12 e não receberá novos microprojetos. Futuras mudanças
