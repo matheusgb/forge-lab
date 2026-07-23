@@ -1,0 +1,26 @@
+Kafka, modelo de log:
+  evt-001: key=order-a; partition=2; offset=0
+  evt-002: key=order-b; partition=0; offset=0
+  evt-003: key=order-a; partition=2; offset=1
+  evt-004: key=order-b; partition=0; offset=1
+  evt-005: key=order-a; partition=2; offset=2
+  evt-006: key=order-b; partition=0; offset=2
+  ordem publicada por chave preservada=True
+  replay por novo group=('evt-002', 'evt-004', 'evt-006', 'evt-001', 'evt-003', 'evt-005')
+  replay completo=True
+  mesmo group retomou no fim=True
+  ordem global entre partições não é garantida
+RabbitMQ, modelo de fila:
+  evt-001: tag=2; redelivered=False; decisão=nack-requeue
+  evt-001: tag=3; redelivered=True; decisão=ack
+  evt-002: tag=4; redelivered=False; decisão=ack
+  evt-003: tag=5; redelivered=False; decisão=ack
+  evt-004: tag=6; redelivered=False; decisão=ack
+  evt-005: tag=7; redelivered=False; decisão=ack
+  evt-006: tag=8; redelivered=False; decisão=ack
+  routing order.created -> eventos ('evt-001', 'evt-002', 'evt-003', 'evt-004', 'evt-005', 'evt-006'); routing order.cancelled -> evt-routing-probe
+  prefetch=1; entregas iniciadas enquanto a primeira estava sem ack=1
+  redeliveries=1
+Conclusão:
+  Kafka mantém posição por partição e permite outra leitura pelo offset.
+  RabbitMQ mantém a mensagem pendente até ack e redelivera depois de nack.

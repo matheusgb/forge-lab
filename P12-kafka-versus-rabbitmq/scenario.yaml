@@ -1,0 +1,23 @@
+{
+  "name": "mesmos-eventos-em-log-e-fila",
+  "kafka_bootstrap_servers": "localhost:19092",
+  "kafka_topic": "p12-order-events",
+  "kafka_live_group": "p12-live",
+  "kafka_replay_group": "p12-replay",
+  "rabbit_url": "amqp://forge:forge-secret@localhost:5673/",
+  "rabbit_exchange": "p12-orders",
+  "rabbit_queue": "p12-order-created",
+  "rabbit_routing_key": "order.created",
+  "rabbit_alternate_queue": "p12-order-cancelled",
+  "rabbit_alternate_routing_key": "order.cancelled",
+  "rabbit_prefetch": 1,
+  "timeout_seconds": 10,
+  "events": [
+    {"event_id": "evt-001", "order_id": "order-a", "sequence": 1},
+    {"event_id": "evt-002", "order_id": "order-b", "sequence": 1},
+    {"event_id": "evt-003", "order_id": "order-a", "sequence": 2},
+    {"event_id": "evt-004", "order_id": "order-b", "sequence": 2},
+    {"event_id": "evt-005", "order_id": "order-a", "sequence": 3},
+    {"event_id": "evt-006", "order_id": "order-b", "sequence": 3}
+  ]
+}
